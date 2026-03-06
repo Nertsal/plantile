@@ -15,6 +15,15 @@ pub struct Model {
     pub grid: Grid,
 }
 
+pub enum PlantKind {
+    /// Early plant (starter)
+    /// - Grows uncontrollably
+    /// - blocks a lot of space
+    /// - breaks wire
+    /// - easy to get eaten by bugs
+    Early,
+}
+
 pub struct Plant {
     /// Time until the plant attempts to grow.
     pub growth_timer: Time,
@@ -26,15 +35,17 @@ pub struct Plant {
     /// If there are no leaves but some stem tiles, the plant can no longer grow.
     /// If there are also no stem tiles, the plant can grow from the root (this is assumed to be the initial state).
     pub leaves: Vec<vec2<ICoord>>,
+    pub kind: PlantKind,
 }
 
 impl Plant {
-    pub fn new(position: vec2<ICoord>) -> Self {
+    pub fn new(position: vec2<ICoord>, kind: PlantKind) -> Self {
         Self {
             growth_timer: r32(1.0),
             root: position,
             stem: vec![],
             leaves: vec![],
+            kind,
         }
     }
 }
@@ -46,7 +57,7 @@ pub struct Grid {
 impl Grid {
     pub fn new() -> Self {
         Self {
-            plants: vec![Plant::new(vec2(0, 1))],
+            plants: vec![Plant::new(vec2(0, 1), PlantKind::Early)],
         }
     }
 }

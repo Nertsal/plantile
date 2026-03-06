@@ -24,4 +24,9 @@ impl geng::State for GameState {
 
         self.render.draw_game(&self.model, framebuffer);
     }
+
+    fn update(&mut self, delta_time: f64) {
+        let delta_time = Time::new(delta_time as f32);
+        self.model.update(delta_time);
+    }
 }
