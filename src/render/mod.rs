@@ -1,14 +1,23 @@
+pub mod ui;
 pub mod util;
 
-use crate::{model::Model, prelude::*};
+use self::{ui::*, util::*};
+
+use crate::{game::GameUI, model::Model, prelude::*};
 
 pub struct GameRender {
     context: Context,
+    util: UtilRender,
+    ui: UiRender,
 }
 
 impl GameRender {
     pub fn new(context: Context) -> Self {
-        Self { context }
+        Self {
+            util: UtilRender::new(context.clone()),
+            ui: UiRender::new(context.clone()),
+            context,
+        }
     }
 
     pub fn draw_game(&mut self, model: &Model, framebuffer: &mut ugli::Framebuffer) {
@@ -56,5 +65,16 @@ impl GameRender {
                     .quad(framebuffer, &model.camera, tile, color);
             }
         }
+    }
+
+    pub fn draw_ui(&mut self, ui: &GameUI, model: &Model, framebuffer: &mut ugli::Framebuffer) {
+        let sprites = &self.context.assets.sprites;
+        self.ui.draw_texture(
+            ui.scissors.position,
+            &sprites.scissors,
+            Color::WHITE,
+            1.0,
+            framebuffer,
+        );
     }
 }

@@ -63,6 +63,13 @@ pub struct Sounds {
 }
 
 #[derive(geng::asset::Load)]
+pub struct Shaders {
+    pub texture: Rc<ugli::Program>,
+    pub ellipse: Rc<ugli::Program>,
+    pub solid: Rc<ugli::Program>,
+}
+
+#[derive(geng::asset::Load)]
 pub struct Fonts {
     pub default: Rc<Font>,
 }
@@ -72,6 +79,7 @@ pub struct Assets {
     pub palette: Palette,
     pub sprites: Sprites,
     pub sounds: Sounds,
+    pub shaders: Shaders,
     pub fonts: Fonts,
 }
 
