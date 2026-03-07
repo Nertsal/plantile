@@ -94,7 +94,10 @@ impl Grid {
 pub struct GridVisual {
     /// Position of the (0, 0) point in the world.
     pub center: vec2<FCoord>,
+    /// Full size of the tile.
     pub tile_size: vec2<FCoord>,
+    /// Margin applied to make the tile visually smaller and leave space in-between tiles.
+    pub tile_margin: vec2<FCoord>,
 }
 
 impl GridVisual {
@@ -109,13 +112,14 @@ impl GridVisual {
             min,
             max: min + self.tile_size,
         }
+        .extend_symmetric(-self.tile_margin)
     }
 
     /// World coordinates AABB of the multiple tiles.
     pub fn multitile_bounds(&self, grid: Aabb2<ICoord>) -> Aabb2<FCoord> {
         let min = self.grid_to_world(grid.min);
         let max = self.grid_to_world(grid.max) + self.tile_size;
-        Aabb2 { min, max }
+        Aabb2 { min, max }.extend_symmetric(-self.tile_margin)
     }
 
     /// Calculate the grid position along with the offset from the bottom left corner of the tile.
@@ -142,6 +146,7 @@ impl Model {
             grid_visual: GridVisual {
                 center: vec2::ZERO,
                 tile_size: vec2(1.0, 1.0).as_r32(),
+                tile_margin: vec2(0.05, 0.05).as_r32(),
             },
 
             grid: Grid::new(),
