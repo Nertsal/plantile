@@ -1,0 +1,7 @@
+background = "#1F1F2B"
+tile_dark = "#292933"
+tile_lit = "#414145"
+light = "#FFFFFF"
+
+[plants]
+Early = "#4E9D78"

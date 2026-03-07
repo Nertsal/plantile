@@ -20,7 +20,12 @@ impl GameState {
 
 impl geng::State for GameState {
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
-        ugli::clear(framebuffer, Some(Color::BLACK), None, None);
+        ugli::clear(
+            framebuffer,
+            Some(self.context.assets.palette.background),
+            None,
+            None,
+        );
 
         self.render.draw_game(&self.model, framebuffer);
     }

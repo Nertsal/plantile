@@ -1,8 +1,10 @@
 mod font;
 
-use std::path::PathBuf;
-
 pub use self::font::*;
+
+use crate::{model::*, prelude::Color};
+
+use std::path::PathBuf;
 
 use geng::prelude::*;
 use geng_utils::gif::GifFrame;
@@ -39,8 +41,20 @@ fn load_gif(
     .boxed_local()
 }
 
+#[derive(Debug, Clone, geng::asset::Load, Serialize, Deserialize)]
+#[load(serde = "toml")]
+pub struct Palette {
+    pub background: Color,
+    pub tile_dark: Color,
+    pub tile_lit: Color,
+    pub light: Color,
+    pub plants: HashMap<PlantKind, Color>,
+}
+
 #[derive(geng::asset::Load)]
-pub struct Assets {}
+pub struct Assets {
+    pub palette: Palette,
+}
 
 impl Assets {
     pub async fn load(manager: &geng::asset::Manager) -> anyhow::Result<Self> {

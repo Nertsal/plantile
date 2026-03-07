@@ -15,6 +15,7 @@ pub struct Model {
     pub grid: Grid,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum PlantKind {
     /// Early plant (starter)
     /// - Grows uncontrollably
@@ -50,15 +51,43 @@ impl Plant {
     }
 }
 
+pub struct Light {
+    pub pos: Aabb2<ICoord>,
+}
+
+impl Light {
+    pub fn new(pos: vec2<ICoord>) -> Self {
+        Self {
+            pos: Aabb2::from_corners(pos + vec2(-1, 0), pos + vec2(1, 0)),
+        }
+    }
+}
+
 pub struct Grid {
     pub plants: Vec<Plant>,
+    pub lights: Vec<Light>,
 }
 
 impl Grid {
     pub fn new() -> Self {
         Self {
             plants: vec![Plant::new(vec2(0, 1), PlantKind::Early)],
+            lights: vec![Light::new(vec2(0, 20))],
         }
+    }
+
+    pub fn is_tile_lit(&self, pos: vec2<ICoord>) -> bool {
+        self.lights.iter().any(|light| {
+            let dx = if pos.x < light.pos.min.x {
+                light.pos.min.x - pos.x
+            } else if pos.x > light.pos.max.x {
+                pos.x - light.pos.max.x
+            } else {
+                0
+            };
+            let dy = light.pos.min.y - pos.y;
+            dy > 0 && dy >= dx
+        })
     }
 }
 
@@ -80,6 +109,13 @@ impl GridVisual {
             min,
             max: min + self.tile_size,
         }
+    }
+
+    /// World coordinates AABB of the multiple tiles.
+    pub fn multitile_bounds(&self, grid: Aabb2<ICoord>) -> Aabb2<FCoord> {
+        let min = self.grid_to_world(grid.min);
+        let max = self.grid_to_world(grid.max) + self.tile_size;
+        Aabb2 { min, max }
     }
 
     /// Calculate the grid position along with the offset from the bottom left corner of the tile.
