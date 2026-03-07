@@ -28,6 +28,7 @@ pub enum InputState {
 #[derive(Debug, Clone)]
 pub enum Item {
     Scissors,
+    Seed(PlantKind),
 }
 
 impl GameState {
@@ -53,11 +54,16 @@ impl GameState {
             let target = self.cursor_grid_pos;
             match item {
                 Item::Scissors => {
-                    if let Some(plant) = self.model.grid.plants.iter_mut().find(|plant| {
+                    if let Some(plant_idx) = self.model.grid.plants.iter_mut().position(|plant| {
                         plant.stem.contains(&target) || plant.leaves.contains(&target)
                     }) {
-                        plant.stem.clear();
-                        plant.leaves.clear();
+                        self.model.cut_plant(plant_idx);
+                        self.input_state = InputState::Idle;
+                    }
+                }
+                &Item::Seed(kind) => {
+                    if self.model.plant_seed(target, kind) {
+                        self.input_state = InputState::Idle;
                     }
                 }
             }
@@ -75,7 +81,15 @@ impl geng::State for GameState {
         match &mut self.input_state {
             InputState::Idle => {
                 if self.ui.scissors.mouse_left.clicked {
+                    log::debug!("scissors");
                     self.input_state = InputState::UseItem(Item::Scissors);
+                } else if self.ui.seed.mouse_left.clicked {
+                    log::debug!("seed");
+                    let cost = 5;
+                    if self.model.money >= cost {
+                        self.model.money -= cost;
+                        self.input_state = InputState::UseItem(Item::Seed(PlantKind::Early));
+                    }
                 }
             }
             InputState::UseItem(_) => {}

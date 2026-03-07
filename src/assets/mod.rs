@@ -45,6 +45,7 @@ fn load_gif(
 #[load(serde = "toml")]
 pub struct Palette {
     pub background: Color,
+    pub text: Color,
     pub tile_dark: Color,
     pub tile_lit: Color,
     pub light: Color,
@@ -54,6 +55,8 @@ pub struct Palette {
 #[derive(geng::asset::Load)]
 pub struct Sprites {
     pub scissors: PixelTexture,
+    pub seed: PixelTexture,
+    pub coin: PixelTexture,
 }
 
 #[derive(geng::asset::Load)]

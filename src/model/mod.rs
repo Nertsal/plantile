@@ -5,6 +5,7 @@ use crate::prelude::*;
 pub type ICoord = i32;
 pub type FCoord = R32;
 pub type Time = R32;
+pub type Money = i32;
 
 pub struct Model {
     pub camera: Camera2d,
@@ -13,6 +14,7 @@ pub struct Model {
 
     /// Actual logic data.
     pub grid: Grid,
+    pub money: Money,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -150,6 +152,7 @@ impl Model {
             },
 
             grid: Grid::new(),
+            money: 0,
         }
     }
 }
