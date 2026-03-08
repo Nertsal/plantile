@@ -37,7 +37,7 @@ pub struct Leaf {
 impl Leaf {
     pub fn new(kind: PlantKind) -> Self {
         Self {
-            growth_timer: Some(r32(1.0)),
+            growth_timer: Some(r32(0.5)),
             kind,
         }
     }
@@ -55,7 +55,7 @@ impl Light {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Positioned<T> {
     pub pos: vec2<ICoord>,
     pub tile: T,
@@ -89,6 +89,12 @@ impl Grid {
         self.tiles.get(&pos).map(|tile| Positioned { pos, tile })
     }
 
+    pub fn get_tile_mut(&mut self, pos: vec2<ICoord>) -> Option<Positioned<&mut Tile>> {
+        self.tiles
+            .get_mut(&pos)
+            .map(|tile| Positioned { pos, tile })
+    }
+
     pub fn remove_tile(&mut self, pos: vec2<ICoord>) -> Option<Positioned<Tile>> {
         self.tiles.remove(&pos).map(|tile| Positioned { pos, tile })
     }
@@ -99,12 +105,11 @@ impl Grid {
             .map(|tile| Positioned { pos, tile })
     }
 
-    pub fn get_neighbors(&self, pos: vec2<ICoord>) -> Vec<Positioned<&Tile>> {
+    pub fn get_neighbors(&self, pos: vec2<ICoord>) -> impl Iterator<Item = Positioned<&Tile>> {
         let offsets = [vec2(-1, 0), vec2(0, -1), vec2(1, 0), vec2(0, 1)];
         offsets
             .into_iter()
-            .filter_map(|offset| self.get_tile(pos + offset))
-            .collect()
+            .filter_map(move |offset| self.get_tile(pos + offset))
     }
 
     // pub fn is_tile_lit(&self, pos: vec2<ICoord>) -> bool {

@@ -1,99 +1,76 @@
 use super::*;
 
-const GROWTH_TIMER: f32 = 0.05;
-const MAX_SIZE: usize = 40;
+const MAX_SIZE: usize = 15;
 const SPLIT_CHANCE: f32 = 0.1;
 
 impl Model {
-    pub fn update_plants(&mut self, delta_time: Time) {
+    pub fn update_plant(&mut self, position: vec2<ICoord>, delta_time: Time) {
+        let Some(mut plant) = self.grid.get_tile_mut(position) else {
+            return;
+        };
+        let Tile::Leaf(leaf) = &mut plant.tile else {
+            return;
+        };
+
         let mut rng = thread_rng();
 
-        // Update plants
-        // let mut to_grow = Vec::new();
-        // for (idx, plant) in self.grid.plants.iter_mut().enumerate() {
-        //     if plant.growth_timer > Time::ZERO {
-        //         plant.growth_timer -= delta_time;
-        //     } else {
-        //         // Attempt to grow
-        //         plant.growth_timer += r32(GROWTH_TIMER); // TODO: configurable somewhere somehow for different kinds of plants
-        //         if plant.stem.len() > MAX_SIZE {
-        //             // Stop growing
-        //             continue;
-        //         }
-        //         to_grow.push(idx);
-        //     }
-        // }
+        // Update growth timer
+        let mut grow = false;
+        if let Some(timer) = &mut leaf.growth_timer {
+            *timer -= delta_time;
+            if *timer <= Time::ZERO {
+                // Attempt to grow
+                grow = true;
+                leaf.growth_timer = None;
+            }
+        }
 
-        // Grow plants
-        // for grow_idx in to_grow {
-        //     let Some(plant) = self.grid.plants.get(grow_idx) else {
-        //         continue;
-        //     };
-        //     if plant.leaves.is_empty() {
-        //         if plant.stem.is_empty() {
-        //             // Grow from the root
-        //             let target = plant.root + vec2(0, 1);
-        //             if can_grow_into(target, &self.grid) {
-        //                 let plant = self.grid.plants.get_mut(grow_idx).unwrap();
-        //                 plant.leaves.push(target);
-        //             }
-        //         }
-        //     } else {
-        //         // Grow from the leaves
-        //         #[allow(clippy::type_complexity)]
-        //         let mut growth: Vec<(Option<vec2<ICoord>>, Option<vec2<ICoord>>)> =
-        //             Vec::with_capacity(plant.leaves.len());
-        //         for &leaf in &plant.leaves {
-        //             let options: Vec<_> = [vec2(-1, 0), vec2(0, 1), vec2(1, 0)]
-        //                 .iter()
-        //                 .copied()
-        //                 .map(|delta| leaf + delta)
-        //                 .filter(|&pos| {
-        //                     can_grow_into(pos, &self.grid)
-        //                         && !growth
-        //                             .iter()
-        //                             .any(|(left, right)| *left == Some(pos) || *right == Some(pos))
-        //                 })
-        //                 .map(|pos| (pos, density_near(pos, &self.grid).recip()))
-        //                 .collect();
+        if !grow {
+            return;
+        }
 
-        //             let split_chance = SPLIT_CHANCE as f64;
-        //             let grow = if rng.gen_bool(split_chance) {
-        //                 // Split
-        //                 let mut growth = options
-        //                     .choose_multiple_weighted(&mut rng, 2, |(_, w)| *w)
-        //                     .into_iter()
-        //                     .flatten();
-        //                 (
-        //                     growth.next().map(|(p, _)| *p),
-        //                     growth.next().map(|(p, _)| *p),
-        //                 )
-        //             } else {
-        //                 (
-        //                     options
-        //                         .choose_weighted(&mut rng, |(_, w)| *w)
-        //                         .ok()
-        //                         .map(|(p, _)| *p),
-        //                     None,
-        //                 )
-        //             };
-        //             growth.push(grow);
-        //         }
+        // Grow
+        let Some(plant) = self.grid.get_tile(position) else {
+            return;
+        };
+        let Tile::Leaf(leaf) = &plant.tile else {
+            return;
+        };
+        if get_all_connected(&self.grid, plant.pos, |tile| {
+            matches!(tile.tile, Tile::Leaf(_))
+        })
+        .len()
+            >= MAX_SIZE
+        {
+            // Over max size
+            return;
+        }
 
-        //         let plant = self.grid.plants.get_mut(grow_idx).unwrap();
-        //         let mut new_leaves = Vec::new();
-        //         for (leaf, (grow_left, grow_right)) in plant.leaves.iter_mut().zip(growth) {
-        //             if let Some(grow) = grow_left {
-        //                 plant.stem.push(*leaf);
-        //                 *leaf = grow;
-        //             }
-        //             if let Some(grow) = grow_right {
-        //                 new_leaves.push(grow);
-        //             }
-        //         }
-        //         plant.leaves.extend(new_leaves);
-        //     }
-        // }
+        // Grow
+        let options: Vec<_> = [vec2(-1, 0), vec2(0, 1), vec2(1, 0), vec2(0, -1)]
+            .iter()
+            .copied()
+            .map(|delta| plant.pos + delta)
+            .filter(|&pos| can_grow_into(pos, &self.grid))
+            .collect();
+
+        let split_chance = SPLIT_CHANCE as f64;
+        let (grow_left, grow_right) = if rng.gen_bool(split_chance) {
+            // Split
+            let mut growth = options.choose_multiple(&mut rng, 2);
+            (growth.next().copied(), growth.next().copied())
+        } else {
+            (options.choose(&mut rng).copied(), None)
+        };
+
+        // Spawn new plants
+        let kind = leaf.kind;
+        if let Some(grow) = grow_left {
+            self.grid.set_tile(grow, Tile::Leaf(Leaf::new(kind)));
+        }
+        if let Some(grow) = grow_right {
+            self.grid.set_tile(grow, Tile::Leaf(Leaf::new(kind)));
+        }
     }
 }
 
