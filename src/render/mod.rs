@@ -65,6 +65,22 @@ impl GameRender {
                 .draw_on_tile(&model.grid_visual, pos, texture, &model.camera, framebuffer);
         }
 
+        // Drone
+        let angle = Angle::from_radians(
+            model.drone.velocity.x.signum()
+                * model.drone.velocity.y.signum()
+                * model.drone.velocity.len()
+                / r32(Drone::MAX_SPEED)
+                * r32(0.5),
+        );
+        self.util.draw_texture_autoscaled(
+            model.drone.position,
+            angle.as_f32(),
+            &sprites.drone,
+            &model.camera,
+            framebuffer,
+        );
+
         // Cursor selection
         self.util.draw_on_tile(
             &model.grid_visual,
@@ -100,24 +116,24 @@ impl GameRender {
             framebuffer,
         );
 
-        self.ui
-            .draw_quad(ui.scissors.position, Color::GRAY, framebuffer);
-        self.ui.draw_texture(
-            ui.scissors.position,
-            &sprites.scissors,
-            Color::WHITE,
-            1.0,
-            framebuffer,
-        );
+        // self.ui
+        //     .draw_quad(ui.scissors.position, Color::GRAY, framebuffer);
+        // self.ui.draw_texture(
+        //     ui.scissors.position,
+        //     &sprites.scissors,
+        //     Color::WHITE,
+        //     1.0,
+        //     framebuffer,
+        // );
 
-        self.ui
-            .draw_quad(ui.seed.position, Color::GRAY, framebuffer);
-        self.ui.draw_texture(
-            ui.seed.position,
-            &sprites.seed,
-            Color::WHITE,
-            1.0,
-            framebuffer,
-        );
+        // self.ui
+        //     .draw_quad(ui.seed.position, Color::GRAY, framebuffer);
+        // self.ui.draw_texture(
+        //     ui.seed.position,
+        //     &sprites.seed,
+        //     Color::WHITE,
+        //     1.0,
+        //     framebuffer,
+        // );
     }
 }

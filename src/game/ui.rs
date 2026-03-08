@@ -4,16 +4,16 @@ use crate::ui::{layout::AreaOps, widget::WidgetState};
 
 pub struct GameUI {
     pub coins: WidgetState,
-    pub scissors: WidgetState,
-    pub seed: WidgetState,
+    // pub scissors: WidgetState,
+    // pub seed: WidgetState,
 }
 
 impl GameUI {
     pub fn new() -> Self {
         Self {
             coins: WidgetState::new(),
-            scissors: WidgetState::new(),
-            seed: WidgetState::new(),
+            // scissors: WidgetState::new(),
+            // seed: WidgetState::new(),
         }
     }
 
@@ -29,17 +29,17 @@ impl GameUI {
         self.coins.update(coins, context);
 
         // Items
-        let item_size = vec2(1.5, 1.5) * layout_size;
-        let widgets = [&mut self.scissors, &mut self.seed];
-        let items = left_bar
-            .align_aabb(item_size, vec2(0.5, 0.5))
-            .stack_aligned(
-                vec2(0.0, item_size.y + layout_size),
-                widgets.len(),
-                vec2(0.5, 0.5),
-            );
-        for (pos, widget) in itertools::izip!(items, widgets) {
-            widget.update(pos, context);
-        }
+        // let item_size = vec2(1.5, 1.5) * layout_size;
+        // let widgets = [&mut self.scissors, &mut self.seed];
+        // let items = left_bar
+        //     .align_aabb(item_size, vec2(0.5, 0.5))
+        //     .stack_aligned(
+        //         vec2(0.0, item_size.y + layout_size),
+        //         widgets.len(),
+        //         vec2(0.5, 0.5),
+        //     );
+        // for (pos, widget) in itertools::izip!(items, widgets) {
+        //     widget.update(pos, context);
+        // }
     }
 }

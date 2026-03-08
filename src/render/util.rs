@@ -151,6 +151,24 @@ impl UtilRender {
             .textured_quad(framebuffer, camera, quad, texture, Color::WHITE);
     }
 
+    pub fn draw_texture_autoscaled(
+        &self,
+        pos: vec2<FCoord>,
+        angle: Angle,
+        texture: &ugli::Texture,
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        let size = texture.size().as_f32() / TILE_SIZE_PIXELS.as_f32();
+        let quad = Aabb2::ZERO.extend_symmetric(size / 2.0);
+        self.context.geng.draw2d().draw2d(
+            framebuffer,
+            camera,
+            &draw2d::TexturedQuad::new(quad, texture)
+                .transform(mat3::translate(pos.as_f32()) * mat3::rotate(angle)),
+        );
+    }
+
     pub fn draw_text(
         &self,
         text: impl AsRef<str>,

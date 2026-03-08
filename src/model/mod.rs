@@ -15,6 +15,26 @@ pub struct Model {
     /// Actual logic data.
     pub grid: Grid,
     pub money: Money,
+    pub drone: Drone,
+}
+
+pub enum DroneTarget {
+    MoveTo(vec2<ICoord>),
+    Interact(vec2<ICoord>),
+    // KillBug(Id),
+}
+
+pub struct Drone {
+    pub position: vec2<FCoord>,
+    pub velocity: vec2<FCoord>,
+    pub target: DroneTarget,
+}
+
+impl Drone {
+    pub const ACCELERATION: f32 = 20.0;
+    pub const DECELERATION: f32 = 10.0;
+    pub const MAX_SPEED: f32 = 20.0;
+    pub const REACH: f32 = 0.5;
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -193,6 +213,11 @@ impl Model {
 
             grid: Grid::new(),
             money: 0,
+            drone: Drone {
+                position: vec2::ZERO,
+                velocity: vec2::ZERO,
+                target: DroneTarget::MoveTo(vec2::ZERO),
+            },
         }
     }
 }

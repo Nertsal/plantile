@@ -1,6 +1,20 @@
 use super::*;
 
 impl Model {
+    pub fn interact_with(&mut self, target: vec2<ICoord>) {
+        log::debug!("interact with {}", target);
+        let Some(tile) = self.grid.get_tile(target) else {
+            // Tell the drone to just fly to this tile
+            self.drone.target = DroneTarget::MoveTo(target);
+            return;
+        };
+
+        self.drone.target = match &tile.tile {
+            // Tile::Bug(bug_id) => self.drone.target = DroneTarget::KillBug(bug_id),
+            _ => DroneTarget::Interact(target),
+        };
+    }
+
     pub fn cut_plant(&mut self, target: vec2<ICoord>) -> bool {
         log::debug!("cut plant at {}", target);
         let Some(tile) = self.grid.get_tile(target) else {

@@ -26,13 +26,7 @@ pub struct CursorState {
 #[derive(Debug)]
 pub enum InputState {
     Idle,
-    UseItem(Item),
-}
-
-#[derive(Debug, Clone)]
-pub enum Item {
-    Scissors,
-    Seed(PlantKind),
+    // PlaceBlock,
 }
 
 impl GameState {
@@ -56,20 +50,9 @@ impl GameState {
     }
 
     fn left_click(&mut self) {
-        if let InputState::UseItem(item) = &self.input_state {
+        if let InputState::Idle = &self.input_state {
             let target = self.cursor.grid_pos;
-            match item {
-                Item::Scissors => {
-                    if self.model.cut_plant(target) {
-                        self.input_state = InputState::Idle;
-                    }
-                }
-                &Item::Seed(kind) => {
-                    if self.model.plant_seed(target, kind) {
-                        self.input_state = InputState::Idle;
-                    }
-                }
-            }
+            self.model.interact_with(target);
         }
     }
 }
@@ -80,23 +63,7 @@ impl geng::State for GameState {
 
         let delta_time = Time::new(delta_time as f32);
         self.model.update(delta_time);
-
-        match &mut self.input_state {
-            InputState::Idle => {
-                if self.ui.scissors.mouse_left.clicked {
-                    log::debug!("scissors");
-                    self.input_state = InputState::UseItem(Item::Scissors);
-                } else if self.ui.seed.mouse_left.clicked {
-                    log::debug!("seed");
-                    let cost = 5;
-                    if self.model.money >= cost {
-                        self.model.money -= cost;
-                        self.input_state = InputState::UseItem(Item::Seed(PlantKind::Early));
-                    }
-                }
-            }
-            InputState::UseItem(_) => {}
-        }
+        // self.model.drone.position = self.cursor.world_pos;
     }
 
     fn handle_event(&mut self, event: geng::Event) {
