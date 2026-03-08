@@ -11,6 +11,8 @@ pub struct Model {
     pub camera: Camera2d,
     /// Data used to convert between grid and world coordinates.
     pub grid_visual: GridVisual,
+    pub config: Config,
+    pub unlocked_shop: Vec<Tile>,
 
     /// Actual logic data.
     pub grid: Grid,
@@ -57,12 +59,12 @@ pub enum PlantKind {
     /// - breaks wire
     /// - easy to get eaten by bugs
     TypeA,
-    // TypeB,
+    TypeB,
     // TypeC,
     // TypeD,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Leaf {
     /// Time until the plant attempts to grow.
     pub growth_timer: Option<Time>,
@@ -84,32 +86,20 @@ impl Leaf {
     }
 }
 
-pub struct Light {
-    pub pos: Aabb2<ICoord>,
-}
-
-impl Light {
-    pub fn new(pos: vec2<ICoord>) -> Self {
-        Self {
-            pos: Aabb2::from_corners(pos + vec2(-1, 0), pos + vec2(1, 0)),
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
 pub struct Positioned<T> {
     pub pos: vec2<ICoord>,
     pub tile: T,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum SoilState {
     Dry,
     Watered,
     // Rich,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Tile {
     Seed(PlantKind),
     Leaf(Leaf),
@@ -222,7 +212,7 @@ impl GridVisual {
 }
 
 impl Model {
-    pub fn new() -> Self {
+    pub fn new(config: Config) -> Self {
         Self {
             camera: Camera2d {
                 center: vec2(0.5, 5.0),
@@ -234,9 +224,10 @@ impl Model {
                 tile_size: vec2(1.0, 1.0).as_r32(),
                 tile_margin: vec2(0.0, 0.0).as_r32(),
             },
+            unlocked_shop: Vec::new(),
 
             grid: Grid::new(),
-            money: 0,
+            money: 90,
             drone: Drone {
                 position: vec2::ZERO,
                 velocity: vec2::ZERO,
@@ -244,6 +235,8 @@ impl Model {
                 action_progress: R32::ZERO,
             },
             inventory: vec![(Tile::Seed(PlantKind::TypeA), 1)],
+
+            config,
         }
     }
 }

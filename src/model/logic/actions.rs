@@ -34,7 +34,7 @@ impl Model {
             return false;
         }
 
-        let cost = 20;
+        let cost = self.config.get_cost(&tile);
         if self.money < cost {
             return false;
         }

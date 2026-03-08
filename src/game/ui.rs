@@ -16,13 +16,17 @@ pub struct GameUI {
 }
 
 impl GameUI {
-    pub fn new() -> Self {
+    pub fn new(context: &Context) -> Self {
+        let shop = &context.assets.config.shop;
         Self {
             inventory: WidgetState::new(),
             inventory_items: vec![WidgetState::new(); 6],
 
             shop: WidgetState::new(),
-            shop_items: vec![(WidgetState::new(), Tile::Light)],
+            shop_items: shop
+                .iter()
+                .map(|item| (WidgetState::new(), item.tile.clone()))
+                .collect(),
 
             gold: WidgetState::new(),
         }

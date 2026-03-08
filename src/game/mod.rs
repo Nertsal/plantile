@@ -34,8 +34,8 @@ impl GameState {
     pub fn new(context: Context) -> Self {
         Self {
             render: GameRender::new(context.clone()),
-            model: Model::new(),
-            ui: GameUI::new(),
+            model: Model::new(context.assets.config.clone()),
+            ui: GameUI::new(&context),
 
             cursor: CursorState {
                 screen_pos: vec2::ZERO,
@@ -90,9 +90,27 @@ impl geng::State for GameState {
             }
         }
         for (widget, tile) in &self.ui.shop_items {
-            let cost = 20;
-            if widget.mouse_left.clicked && self.model.money >= cost {
-                self.input_state = InputState::BuyTile(tile.clone());
+            let unlock_cost = self
+                .model
+                .config
+                .shop
+                .iter()
+                .find(|item| {
+                    item.tile == *tile
+                        && item.unlocked_at > 0
+                        && !self.model.unlocked_shop.contains(tile)
+                })
+                .map(|item| item.unlocked_at);
+            let cost = self.model.config.get_cost(tile);
+            if widget.mouse_left.clicked {
+                if let Some(unlock) = unlock_cost {
+                    if self.model.money >= unlock {
+                        self.model.money -= unlock;
+                        self.model.unlocked_shop.push(tile.clone());
+                    }
+                } else if self.model.money >= cost {
+                    self.input_state = InputState::BuyTile(tile.clone());
+                }
                 break;
             }
         }

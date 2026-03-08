@@ -132,7 +132,7 @@ impl Model {
                     self.drone.action_progress = R32::ZERO;
                     self.drone.target =
                         DroneTarget::MoveTo(self.grid_visual.world_to_grid(self.drone.position));
-                    let cost = 20;
+                    let cost = self.config.get_cost(&tile);
                     if self.grid.get_tile(position).is_none() && self.money >= cost {
                         self.grid.set_tile(position, tile.clone());
                         self.money -= cost;

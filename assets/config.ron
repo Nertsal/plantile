@@ -1,0 +1,19 @@
+Config(
+    shop: [
+        (
+            price: 10,
+            unlocked_at: 0,
+            tile: Seed(TypeA),
+        ),
+        (
+            price: 30,
+            unlocked_at: 0,
+            tile: Soil(Dry),
+        ),
+        (
+            price: 60,
+            unlocked_at: 100,
+            tile: Seed(TypeB),
+        ),
+    ],
+)

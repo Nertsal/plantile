@@ -9,6 +9,45 @@ use std::path::PathBuf;
 use geng::prelude::*;
 use geng_utils::gif::GifFrame;
 
+#[derive(geng::asset::Load, Serialize, Deserialize, Debug, Clone)]
+#[load(serde = "ron")]
+pub struct Config {
+    pub shop: Vec<ConfigShopItem>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ConfigShopItem {
+    pub price: Money,
+    pub unlocked_at: Money,
+    pub tile: Tile,
+}
+
+impl Config {
+    pub fn get_cost(&self, tile: &Tile) -> Money {
+        self.shop
+            .iter()
+            .find(|item| item.tile == *tile)
+            .map(|item| item.price)
+            .unwrap_or(0)
+    }
+}
+
+#[derive(geng::asset::Load)]
+pub struct Assets {
+    pub palette: Palette,
+    pub sprites: Sprites,
+    pub sounds: Sounds,
+    pub shaders: Shaders,
+    pub fonts: Fonts,
+    pub config: Config,
+}
+
+impl Assets {
+    pub async fn load(manager: &geng::asset::Manager) -> anyhow::Result<Self> {
+        geng::asset::Load::load(manager, &run_dir().join("assets"), &()).await
+    }
+}
+
 #[derive(geng::asset::Load)]
 pub struct LoadingAssets {
     #[load(path = "sprites/title.png", options(filter = "ugli::Filter::Nearest"))]
@@ -62,8 +101,10 @@ pub struct Sprites {
 #[derive(geng::asset::Load)]
 pub struct SpritesTiles {
     pub plant_a: PixelTexture,
+    pub plant_b: PixelTexture,
     pub light: PixelTexture,
     pub seed_a: PixelTexture,
+    pub seed_b: PixelTexture,
     pub soil_dry: PixelTexture,
     pub soil: PixelTexture,
     // pub soil_rich: PixelTexture,
@@ -74,9 +115,11 @@ impl SpritesTiles {
         match tile {
             Tile::Leaf(leaf) => match leaf.kind {
                 PlantKind::TypeA => &self.plant_a,
+                PlantKind::TypeB => &self.plant_b,
             },
             Tile::Seed(kind) => match kind {
                 PlantKind::TypeA => &self.seed_a,
+                PlantKind::TypeB => &self.seed_b,
             },
             Tile::Light => &self.light,
             Tile::Soil(state) => match state {
@@ -103,21 +146,6 @@ pub struct Shaders {
 #[derive(geng::asset::Load)]
 pub struct Fonts {
     pub default: Rc<Font>,
-}
-
-#[derive(geng::asset::Load)]
-pub struct Assets {
-    pub palette: Palette,
-    pub sprites: Sprites,
-    pub sounds: Sounds,
-    pub shaders: Shaders,
-    pub fonts: Fonts,
-}
-
-impl Assets {
-    pub async fn load(manager: &geng::asset::Manager) -> anyhow::Result<Self> {
-        geng::asset::Load::load(manager, &run_dir().join("assets"), &()).await
-    }
 }
 
 #[derive(Clone)]

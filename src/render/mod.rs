@@ -176,15 +176,36 @@ impl GameRender {
 
         // Shop items
         for (widget, tile) in &ui.shop_items {
-            let texture = &sprites.tiles.get_texture(tile);
-            self.ui
-                .draw_texture(widget.position, texture, Color::WHITE, 1.0, framebuffer);
+            let unlock_cost = model
+                .config
+                .shop
+                .iter()
+                .find(|item| {
+                    item.tile == *tile
+                        && item.unlocked_at > 0
+                        && !model.unlocked_shop.contains(tile)
+                })
+                .map(|item| item.unlocked_at);
 
-            // Price
-            let price = 20;
-            let pos = widget.position.align_pos(vec2(0.5, 1.0)) + vec2(0.0, 3.0) * pixel_scale;
+            let texture = &sprites.tiles.get_texture(tile);
+            let color = if unlock_cost.is_some() {
+                Color::new(0.5, 0.5, 0.5, 1.0)
+            } else {
+                Color::WHITE
+            };
+            self.ui
+                .draw_texture(widget.position, texture, color, 1.0, framebuffer);
+
+            // Cost
+            let (cost, pos) = match unlock_cost {
+                Some(unlock) => (unlock, widget.position.center()),
+                None => (
+                    model.config.get_cost(tile),
+                    widget.position.align_pos(vec2(0.5, 1.0)) + vec2(0.0, 3.0) * pixel_scale,
+                ),
+            };
             self.util.draw_text(
-                format!("{}g", price),
+                format!("{}g", cost),
                 pos,
                 &self.context.assets.fonts.default,
                 TextRenderOptions::new(20.0 * pixel_scale)
