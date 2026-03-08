@@ -50,12 +50,13 @@ pub struct Palette {
 
 #[derive(geng::asset::Load)]
 pub struct Sprites {
-    pub seed: PixelTexture,
-    pub coin: PixelTexture,
     pub drone: PixelTexture,
     pub tile_select: PixelTexture,
     pub tile: PixelTexture,
     pub tiles: SpritesTiles,
+
+    pub ui_window: PixelTexture,
+    pub ui_window_shop: PixelTexture,
 }
 
 #[derive(geng::asset::Load)]
@@ -66,6 +67,20 @@ pub struct SpritesTiles {
     pub soil_dry: PixelTexture,
     pub soil: PixelTexture,
     // pub soil_rich: PixelTexture,
+}
+
+impl SpritesTiles {
+    pub fn get_texture(&self, tile: &Tile) -> &PixelTexture {
+        match tile {
+            Tile::Leaf(_) => &self.plant,
+            Tile::Light => &self.light,
+            Tile::Seed(_) => &self.seed,
+            Tile::Soil(state) => match state {
+                SoilState::Dry => &self.soil_dry,
+                SoilState::Watered => &self.soil,
+            },
+        }
+    }
 }
 
 #[derive(geng::asset::Load)]

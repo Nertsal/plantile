@@ -50,6 +50,25 @@ impl UtilRender {
         }
     }
 
+    // pub fn draw_nine_slice_pp(
+    //     &self,
+    //     pos: Aabb2<f32>,
+    //     color: Color,
+    //     texture: &ugli::Texture,
+    //     scale: f32,
+    //     camera: &impl geng::AbstractCamera2d,
+    //     framebuffer: &mut ugli::Framebuffer,
+    // ) {
+    //     let pos = geng_utils::pixel::pixel_perfect_aabb(
+    //         pos.center(),
+    //         vec2(0.5, 0.5),
+    //         texture.size().map(|x| (x as f32 * scale).round() as usize),
+    //         camera,
+    //         framebuffer.size().as_f32(),
+    //     );
+    //     self.draw_nine_slice(pos, color, texture, scale, camera, framebuffer)
+    // }
+
     pub fn draw_nine_slice(
         &self,
         pos: Aabb2<f32>,

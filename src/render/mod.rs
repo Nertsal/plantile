@@ -57,15 +57,7 @@ impl GameRender {
             let Some(tile) = model.grid.get_tile(pos) else {
                 continue;
             };
-            let texture = match tile.tile {
-                Tile::Leaf(_) => &sprites.tiles.plant,
-                Tile::Light => &sprites.tiles.light,
-                Tile::Seed(_) => &sprites.tiles.seed,
-                Tile::Soil(state) => match state {
-                    SoilState::Dry => &sprites.tiles.soil_dry,
-                    SoilState::Watered => &sprites.tiles.soil,
-                },
-            };
+            let texture = sprites.tiles.get_texture(&tile.tile);
             self.util
                 .draw_on_tile(&model.grid_visual, pos, texture, &model.camera, framebuffer);
         }
@@ -100,45 +92,68 @@ impl GameRender {
         let sprites = &self.context.assets.sprites;
         let palette = &self.context.assets.palette;
 
-        self.ui.draw_texture(
-            ui.coins
-                .position
-                .align_aabb(vec2(1.0, 1.0) * ui.coins.position.height(), vec2(0.0, 0.5)),
-            &sprites.coin,
+        let pixel_scale = get_pixel_scale(framebuffer.size());
+
+        // Inventory
+        self.util.draw_nine_slice(
+            ui.inventory.position,
             Color::WHITE,
-            1.0,
-            framebuffer,
-        );
-        self.util.draw_text(
-            model.money.to_string(),
-            ui.coins.position.align_pos(vec2(0.0, 0.5))
-                + vec2(ui.coins.position.height() * 0.75, 0.0),
-            &self.context.assets.fonts.default,
-            TextRenderOptions::new(ui.coins.position.height() * 0.6)
-                .color(palette.text)
-                .align(vec2(0.0, 0.5)),
+            &sprites.ui_window,
+            pixel_scale,
             &geng::PixelPerfectCamera,
             framebuffer,
         );
 
-        // self.ui
-        //     .draw_quad(ui.scissors.position, Color::GRAY, framebuffer);
-        // self.ui.draw_texture(
-        //     ui.scissors.position,
-        //     &sprites.scissors,
-        //     Color::WHITE,
-        //     1.0,
-        //     framebuffer,
-        // );
+        // Shop
+        self.util.draw_nine_slice(
+            ui.shop.position,
+            Color::WHITE,
+            &sprites.ui_window_shop,
+            pixel_scale,
+            &geng::PixelPerfectCamera,
+            framebuffer,
+        );
 
-        // self.ui
-        //     .draw_quad(ui.seed.position, Color::GRAY, framebuffer);
-        // self.ui.draw_texture(
-        //     ui.seed.position,
-        //     &sprites.seed,
-        //     Color::WHITE,
-        //     1.0,
-        //     framebuffer,
-        // );
+        // Shop items
+        for (widget, tile) in &ui.shop_items {
+            let texture = &sprites.tiles.get_texture(tile);
+            self.ui
+                .draw_texture(widget.position, texture, Color::WHITE, 1.0, framebuffer);
+
+            // Price
+            let price = 20;
+            let pos = widget.position.align_pos(vec2(0.5, 1.0)) + vec2(0.0, 3.0) * pixel_scale;
+            self.util.draw_text(
+                format!("{}g", price),
+                pos,
+                &self.context.assets.fonts.default,
+                TextRenderOptions::new(20.0 * pixel_scale)
+                    .color(palette.text)
+                    .align(vec2(0.5, 0.0)),
+                &geng::PixelPerfectCamera,
+                framebuffer,
+            );
+        }
+
+        // Gold
+        self.util.draw_nine_slice(
+            ui.gold.position,
+            Color::WHITE,
+            &sprites.ui_window,
+            pixel_scale,
+            &geng::PixelPerfectCamera,
+            framebuffer,
+        );
+        let pos = ui.gold.position.extend_uniform(-0.0 * pixel_scale);
+        self.util.draw_text(
+            format!("{}g", model.money),
+            pos.center(),
+            &self.context.assets.fonts.default,
+            TextRenderOptions::new(20.0 * pixel_scale)
+                .color(palette.text)
+                .align(vec2(0.5, 0.5)),
+            &geng::PixelPerfectCamera,
+            framebuffer,
+        );
     }
 }
