@@ -53,6 +53,7 @@ pub struct Sprites {
     pub scissors: PixelTexture,
     pub seed: PixelTexture,
     pub coin: PixelTexture,
+    pub tile_select: PixelTexture,
     pub tile: PixelTexture,
     pub tiles: SpritesTiles,
 }

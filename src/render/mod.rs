@@ -3,7 +3,12 @@ pub mod util;
 
 use self::{ui::*, util::*};
 
-use crate::{game::GameUI, model::*, prelude::*, ui::layout::AreaOps};
+use crate::{
+    game::{CursorState, GameUI},
+    model::*,
+    prelude::*,
+    ui::layout::AreaOps,
+};
 
 /// Full size of a single tile in pixels, used for scaling textures to properly fit on the tile.
 const TILE_SIZE_PIXELS: vec2<usize> = vec2(32, 32);
@@ -23,7 +28,12 @@ impl GameRender {
         }
     }
 
-    pub fn draw_game(&mut self, model: &Model, framebuffer: &mut ugli::Framebuffer) {
+    pub fn draw_game(
+        &mut self,
+        model: &Model,
+        cursor: &CursorState,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
         let assets = &self.context.assets;
         let sprites = &assets.sprites;
 
@@ -54,6 +64,15 @@ impl GameRender {
             self.util
                 .draw_on_tile(&model.grid_visual, pos, texture, &model.camera, framebuffer);
         }
+
+        // Cursor selection
+        self.util.draw_on_tile(
+            &model.grid_visual,
+            cursor.grid_pos,
+            &sprites.tile_select,
+            &model.camera,
+            framebuffer,
+        );
     }
 
     pub fn draw_ui(&mut self, ui: &GameUI, model: &Model, framebuffer: &mut ugli::Framebuffer) {
