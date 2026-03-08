@@ -16,6 +16,7 @@ pub struct Model {
     pub grid: Grid,
     pub money: Money,
     pub drone: Drone,
+    pub inventory: Vec<(Tile, usize)>,
 }
 
 #[derive(Debug)]
@@ -119,7 +120,6 @@ impl Grid {
         Self {
             tiles: hashmap! {
                 vec2(0, 0) => Tile::Soil(SoilState::Dry),
-                vec2(0, 1) => Tile::Seed(PlantKind::Early),
                 vec2(0, 10) => Tile::Light
             },
         }
@@ -237,6 +237,7 @@ impl Model {
                 target: DroneTarget::MoveTo(vec2::ZERO),
                 action_progress: R32::ZERO,
             },
+            inventory: vec![(Tile::Seed(PlantKind::Early), 1)],
         }
     }
 }
