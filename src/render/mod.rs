@@ -79,21 +79,19 @@ impl GameRender {
             framebuffer,
         );
 
-        // Input state
-        match input_state {
-            InputState::Idle => {
-                // Tile highlight
-                self.util.draw_on_tile(
+        let tile_highlight =
+            |pos: vec2<ICoord>, color: Color, framebuffer: &mut ugli::Framebuffer| {
+                self.util.draw_on_tile_with(
                     &model.grid_visual,
-                    cursor.grid_pos,
+                    pos,
+                    color,
                     &sprites.tile_select,
                     &model.camera,
                     framebuffer,
                 );
-            }
-            InputState::PlaceTile(tile) | InputState::BuyTile(tile) => {
-                // Tile preview
-                let pos = cursor.grid_pos;
+            };
+        let ghost_tile =
+            |pos: vec2<ICoord>, tile: &Tile, framebuffer: &mut ugli::Framebuffer<'_>| {
                 if model.grid.get_tile(pos).is_none() {
                     let texture = sprites.tiles.get_texture(tile);
                     self.util.draw_on_tile_with(
@@ -105,6 +103,27 @@ impl GameRender {
                         framebuffer,
                     );
                 }
+            };
+
+        // Drone action
+        match model.drone.target {
+            DroneTarget::MoveTo(_) => {}
+            DroneTarget::Interact(target, _) => {
+                tile_highlight(target, Color::WHITE, framebuffer);
+            }
+            DroneTarget::PlaceTile(target, ref tile) | DroneTarget::BuyTile(target, ref tile) => {
+                ghost_tile(target, tile, framebuffer);
+                tile_highlight(target, Color::WHITE, framebuffer);
+            }
+        }
+
+        // Input state
+        match input_state {
+            InputState::Idle => {
+                tile_highlight(cursor.grid_pos, Color::new(0.7, 0.7, 0.7, 0.5), framebuffer);
+            }
+            InputState::PlaceTile(tile) | InputState::BuyTile(tile) => {
+                ghost_tile(cursor.grid_pos, tile, framebuffer);
             }
         }
     }
