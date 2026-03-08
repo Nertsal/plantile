@@ -91,7 +91,7 @@ impl GameRender {
                     framebuffer,
                 );
             }
-            InputState::PlaceTile(tile) => {
+            InputState::PlaceTile(tile) | InputState::BuyTile(tile) => {
                 // Tile preview
                 let pos = cursor.grid_pos;
                 if model.grid.get_tile(pos).is_none() {

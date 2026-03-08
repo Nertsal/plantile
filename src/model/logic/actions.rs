@@ -40,6 +40,23 @@ impl Model {
         true
     }
 
+    pub fn buy_tile(&mut self, target: vec2<ICoord>, tile: Tile) -> bool {
+        log::debug!("buy tile at {}: {:?}", target, tile);
+        if self.grid.get_tile(target).is_some() {
+            return false;
+        }
+
+        let cost = 20;
+        if self.money < cost {
+            return false;
+        }
+
+        self.grid.set_tile(target, tile);
+        self.money -= cost;
+
+        true
+    }
+
     pub fn cut_plant(&mut self, target: vec2<ICoord>) -> bool {
         log::debug!("cut plant at {}", target);
         let Some(tile) = self.grid.get_tile(target) else {

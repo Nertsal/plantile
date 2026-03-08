@@ -27,6 +27,7 @@ pub struct CursorState {
 pub enum InputState {
     Idle,
     PlaceTile(Tile),
+    BuyTile(Tile),
 }
 
 impl GameState {
@@ -65,6 +66,11 @@ impl GameState {
                     self.input_state = InputState::Idle;
                 }
             }
+            InputState::BuyTile(tile) => {
+                if self.model.buy_tile(target, tile.clone()) {
+                    self.input_state = InputState::Idle;
+                }
+            }
         }
     }
 }
@@ -80,6 +86,13 @@ impl geng::State for GameState {
         for (widget, (tile, _)) in self.ui.inventory_items.iter().zip(&self.model.inventory) {
             if widget.mouse_left.clicked {
                 self.input_state = InputState::PlaceTile(tile.clone());
+                break;
+            }
+        }
+        for (widget, tile) in &self.ui.shop_items {
+            let cost = 20;
+            if widget.mouse_left.clicked && self.model.money >= cost {
+                self.input_state = InputState::BuyTile(tile.clone());
                 break;
             }
         }
