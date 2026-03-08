@@ -51,12 +51,15 @@ impl Drone {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum PlantKind {
-    /// Early plant (starter)
+    /// Starter plant
     /// - Grows uncontrollably
     /// - blocks a lot of space
     /// - breaks wire
     /// - easy to get eaten by bugs
-    Early,
+    TypeA,
+    // TypeB,
+    // TypeC,
+    // TypeD,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -240,7 +243,7 @@ impl Model {
                 target: DroneTarget::MoveTo(vec2::ZERO),
                 action_progress: R32::ZERO,
             },
-            inventory: vec![(Tile::Seed(PlantKind::Early), 1)],
+            inventory: vec![(Tile::Seed(PlantKind::TypeA), 1)],
         }
     }
 }

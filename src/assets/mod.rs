@@ -61,9 +61,9 @@ pub struct Sprites {
 
 #[derive(geng::asset::Load)]
 pub struct SpritesTiles {
-    pub plant: PixelTexture,
+    pub plant_a: PixelTexture,
     pub light: PixelTexture,
-    pub seed: PixelTexture,
+    pub seed_a: PixelTexture,
     pub soil_dry: PixelTexture,
     pub soil: PixelTexture,
     // pub soil_rich: PixelTexture,
@@ -72,9 +72,13 @@ pub struct SpritesTiles {
 impl SpritesTiles {
     pub fn get_texture(&self, tile: &Tile) -> &PixelTexture {
         match tile {
-            Tile::Leaf(_) => &self.plant,
+            Tile::Leaf(leaf) => match leaf.kind {
+                PlantKind::TypeA => &self.plant_a,
+            },
+            Tile::Seed(kind) => match kind {
+                PlantKind::TypeA => &self.seed_a,
+            },
             Tile::Light => &self.light,
-            Tile::Seed(_) => &self.seed,
             Tile::Soil(state) => match state {
                 SoilState::Dry => &self.soil_dry,
                 SoilState::Watered => &self.soil,

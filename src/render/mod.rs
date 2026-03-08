@@ -63,22 +63,6 @@ impl GameRender {
                 .draw_on_tile(&model.grid_visual, pos, texture, &model.camera, framebuffer);
         }
 
-        // Drone
-        let angle = Angle::from_radians(
-            model.drone.velocity.x.signum()
-                * model.drone.velocity.y.signum()
-                * model.drone.velocity.len()
-                / r32(Drone::MAX_SPEED)
-                * r32(0.5),
-        );
-        self.util.draw_texture_autoscaled(
-            model.drone.position,
-            angle.as_f32(),
-            &sprites.drone,
-            &model.camera,
-            framebuffer,
-        );
-
         let tile_highlight =
             |pos: vec2<ICoord>, color: Color, framebuffer: &mut ugli::Framebuffer| {
                 self.util.draw_on_tile_with(
@@ -126,6 +110,22 @@ impl GameRender {
                 ghost_tile(cursor.grid_pos, tile, framebuffer);
             }
         }
+
+        // Drone
+        let angle = Angle::from_radians(
+            model.drone.velocity.x.signum()
+                * model.drone.velocity.y.signum()
+                * model.drone.velocity.len()
+                / r32(Drone::MAX_SPEED)
+                * r32(0.5),
+        );
+        self.util.draw_texture_autoscaled(
+            model.drone.position,
+            angle.as_f32(),
+            &sprites.drone,
+            &model.camera,
+            framebuffer,
+        );
     }
 
     pub fn draw_ui(&mut self, ui: &GameUI, model: &Model, framebuffer: &mut ugli::Framebuffer) {
