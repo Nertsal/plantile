@@ -20,6 +20,7 @@ pub struct Config {
     pub bug_poop_time: Time,
     pub bug_chill_time: Time,
     pub bug_move_time: Time,
+    pub light_radius: ICoord,
     pub shop: Vec<ConfigShopItem>,
 }
 

@@ -47,20 +47,52 @@ impl Model {
         }
 
         // Grow
+        let lights: Vec<vec2<ICoord>> = self
+            .grid
+            .all_tiles()
+            .filter(|tile| matches!(tile.tile, Tile::Light(true)))
+            .map(|tile| tile.pos)
+            .collect();
         let options: Vec<_> = [vec2(-1, 0), vec2(0, 1), vec2(1, 0), vec2(0, -1)]
             .iter()
             .copied()
             .map(|delta| plant.pos + delta)
             .filter(|&pos| can_grow_into(pos, &self.grid))
+            .map(|pos| {
+                let light_d = lights
+                    .iter()
+                    .map(|light| manhattan_distance(pos, *light))
+                    .min()
+                    .unwrap_or(self.config.light_radius)
+                    .min(self.config.light_radius);
+                let weight = (light_d as f32).recip().powi(3);
+                dbg!(pos, weight)
+            })
             .collect();
+
+        let weight = |(_, w): &(vec2<ICoord>, f32)| *w;
+        let value = |(v, _)| v;
 
         let split_chance = SPLIT_CHANCE as f64;
         let (grow_left, grow_right) = if rng.gen_bool(split_chance) {
             // Split
-            let mut growth = options.choose_multiple(&mut rng, 2);
-            (growth.next().copied(), growth.next().copied())
+            let mut growth = options
+                .choose_multiple_weighted(&mut rng, 2, weight)
+                .into_iter()
+                .flatten();
+            (
+                growth.next().copied().map(value),
+                growth.next().copied().map(value),
+            )
         } else {
-            (options.choose(&mut rng).copied(), None)
+            (
+                options
+                    .choose_weighted(&mut rng, weight)
+                    .ok()
+                    .copied()
+                    .map(value),
+                None,
+            )
         };
 
         // Spawn new plants
