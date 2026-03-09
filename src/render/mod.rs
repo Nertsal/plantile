@@ -66,7 +66,8 @@ impl GameRender {
                 | Tile::Cutter(Cutter {
                     powered: connected, ..
                 })
-                | Tile::Pipe(connected) => {
+                | Tile::Pipe(connected)
+                | Tile::Sprinkler(connected) => {
                     if connected {
                         1.0
                     } else {

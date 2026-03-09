@@ -253,12 +253,43 @@ impl Model {
                         .grid
                         .all_tiles()
                         .find(|tile| {
+                            // Collect water within range not adjacent to a sprinkler
                             matches!(tile.tile, Tile::Water(_))
                                 && manhattan_distance(pos, tile.pos) <= self.config.drainer_radius
+                                && !self
+                                    .grid
+                                    .get_neighbors(tile.pos)
+                                    .any(|tile| matches!(tile.tile, Tile::Sprinkler(_)))
                         })
                         .map(|tile| tile.pos);
                     if let Some(water) = water {
-                        self.collect(water);
+                        // Look for a sprinkler
+                        let mut sprinklers = Vec::new();
+                        get_all_connected(&self.grid, pos, |tile| {
+                            if let Tile::Sprinkler(_) = tile.tile {
+                                sprinklers.push(tile.pos);
+                            }
+                            tile.tile.is_piping()
+                        });
+
+                        let empty_tiles: HashSet<vec2<ICoord>> = sprinklers
+                            .into_iter()
+                            .flat_map(|pos| {
+                                self.grid
+                                    .get_neighbors_all(pos)
+                                    .filter(|tile| tile.tile.is_none())
+                                    .map(|tile| tile.pos)
+                            })
+                            .collect();
+                        if let Some(target) = empty_tiles.into_iter().choose(&mut rng) {
+                            // Pipe water to a sprinkler
+                            self.grid.remove_tile(water);
+                            self.grid
+                                .set_tile(target, Tile::Water(self.config.water_lifetime));
+                        } else {
+                            // Collect water to player inventory
+                            self.collect(water);
+                        }
                     }
                 }
                 Tile::Cutter(_) => {
@@ -294,16 +325,16 @@ impl Model {
                         }
                     }
                 }
-                Tile::Pipe(_) => {
+                Tile::Pipe(_) | Tile::Sprinkler(_) => {
                     let mut piped = false;
                     get_all_connected(&self.grid, pos, |tile| {
                         if let Tile::Drainer = tile.tile {
                             piped = true;
                         }
-                        matches!(tile.tile, Tile::Drainer | Tile::Pipe(_))
+                        tile.tile.is_piping()
                     });
                     if let Some(tile) = self.grid.get_tile_mut(pos)
-                        && let Tile::Pipe(connected) = tile.tile
+                        && let Tile::Pipe(connected) | Tile::Sprinkler(connected) = tile.tile
                     {
                         *connected = piped;
                     }

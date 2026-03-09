@@ -145,6 +145,7 @@ pub enum Tile {
     Drainer,
     Cutter(Cutter),
     Pipe(bool),
+    Sprinkler(bool),
 }
 
 impl Tile {
@@ -176,6 +177,7 @@ impl Tile {
             Tile::Drainer => "Drainer",
             Tile::Cutter(_) => "Cutter",
             Tile::Pipe(_) => "Pipe",
+            Tile::Sprinkler(_) => "Sprinkler",
         }
     }
 
@@ -204,6 +206,10 @@ impl Tile {
             self,
             Tile::Power | Tile::Wire(_) | Tile::Light(_) | Tile::Cutter(_)
         )
+    }
+
+    pub fn is_piping(&self) -> bool {
+        matches!(self, Tile::Drainer | Tile::Pipe(_) | Tile::Sprinkler(_))
     }
 }
 

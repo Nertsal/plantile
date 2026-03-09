@@ -146,6 +146,7 @@ pub struct SpritesTiles {
     pub drain: PixelTexture,
     pub cutter: PixelTexture,
     pub pipe: PixelTexture,
+    pub sprinkler: PixelTexture,
 }
 
 impl SpritesTiles {
@@ -177,6 +178,7 @@ impl SpritesTiles {
             Tile::Drainer => &self.drain,
             Tile::Cutter(_) => &self.cutter,
             Tile::Pipe(_) => &self.pipe,
+            Tile::Sprinkler(_) => &self.sprinkler,
         }
     }
 }
