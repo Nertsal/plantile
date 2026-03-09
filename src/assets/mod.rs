@@ -14,6 +14,7 @@ use geng_utils::gif::GifFrame;
 pub struct Config {
     pub water_frequency: R32,
     pub water_lifetime: Time,
+    pub poop_lifetime: Time,
 
     pub bug_frequency: R32,
     pub bug_hunger: usize,
@@ -148,7 +149,7 @@ impl SpritesTiles {
             },
             Tile::Water(_) => &self.water,
             Tile::Bug(_) => &self.bug,
-            Tile::Poop => &self.poop,
+            Tile::Poop(_) => &self.poop,
             Tile::Power => &self.power,
             Tile::Wire(_) => &self.wire,
         }

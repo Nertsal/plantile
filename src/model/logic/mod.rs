@@ -173,7 +173,8 @@ impl Model {
                                     .find(|tile| tile.tile.is_none())
                                     .map(|tile| tile.pos);
                                 if let Some(target) = target {
-                                    self.grid.set_tile(target, Tile::Poop);
+                                    self.grid
+                                        .set_tile(target, Tile::Poop(self.config.poop_lifetime));
                                     if let Some(bug) = self.grid.get_tile_mut(pos)
                                         && let Tile::Bug(bug) = bug.tile
                                     {
@@ -206,7 +207,12 @@ impl Model {
                         }
                     }
                 }
-                Tile::Poop => {}
+                Tile::Poop(ref mut lifetime) => {
+                    *lifetime -= delta_time;
+                    if *lifetime <= Time::ZERO {
+                        self.grid.remove_tile(pos);
+                    }
+                }
             }
         }
 
@@ -347,9 +353,6 @@ impl Model {
                         }
                         DroneAction::Collect => {
                             self.collect(position);
-                        }
-                        DroneAction::KillBug(_) => {
-                            // Invalid
                         }
                     }
                 }

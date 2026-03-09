@@ -36,7 +36,6 @@ pub enum DroneTarget {
 pub enum DroneAction {
     CutPlant,
     Collect,
-    KillBug(Id),
 }
 
 #[derive(Debug)]
@@ -124,7 +123,7 @@ pub enum Tile {
     Soil(SoilState),
     Water(Time),
     Bug(Bug),
-    Poop,
+    Poop(Time),
     Power,
     Wire(bool),
 }
@@ -147,7 +146,7 @@ impl Tile {
             },
             Tile::Water(_) => "Water",
             Tile::Bug(_) => "Bug",
-            Tile::Poop => "Poop",
+            Tile::Poop(_) => "Poop",
             Tile::Power => "Power",
             Tile::Wire(_) => "Wire",
         }
@@ -160,7 +159,7 @@ impl Tile {
                 | Tile::Light(_)
                 | Tile::Soil(_)
                 | Tile::Water(_)
-                | Tile::Poop
+                | Tile::Poop(_)
                 | Tile::Power
                 | Tile::Wire(_)
         )
