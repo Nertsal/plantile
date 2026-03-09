@@ -16,7 +16,7 @@ Config(
     water_lifetime: 10.0,
     poop_lifetime: 10.0,
 
-    bug_frequency: 0.03,
+    bug_frequency: 0.05,
     bug_hunger: 5,
     bug_eat_time: 1.0,
     bug_poop_time: 3.0,
