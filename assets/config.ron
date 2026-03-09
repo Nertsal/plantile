@@ -1,7 +1,7 @@
 Config(
     water_frequency: 0.1,
     water_lifetime: 10.0,
-    bug_frequency: 0.05,
+    bug_frequency: 0.5,
     bug_hunger: 5,
     bug_eat_timer: 1.0,
     bug_chill_time: 15.0,

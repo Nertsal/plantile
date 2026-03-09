@@ -118,12 +118,34 @@ impl GameRender {
                 ghost_tile(target, tile, framebuffer);
                 tile_highlight(target, Color::WHITE, framebuffer);
             }
+            DroneTarget::KillBug(bug_id) => {
+                let bug = model.grid.tiles.iter().find(|(_, tile)| {
+                    if let Tile::Bug(bug) = tile
+                        && bug.id == bug_id
+                    {
+                        true
+                    } else {
+                        false
+                    }
+                });
+                if let Some((&target, _)) = bug {
+                    tile_highlight(target, Color::RED, framebuffer);
+                }
+            }
         }
 
         // Input state
         match input_state {
             InputState::Idle => {
-                tile_highlight(cursor.grid_pos, Color::new(0.7, 0.7, 0.7, 0.5), framebuffer);
+                let target = cursor.grid_pos;
+                let color = if let Some(tile) = model.grid.get_tile(target)
+                    && let Tile::Bug(_) = tile.tile
+                {
+                    Color::new(0.7, 0.1, 0.1, 0.5)
+                } else {
+                    Color::new(0.7, 0.7, 0.7, 0.5)
+                };
+                tile_highlight(target, color, framebuffer);
             }
             InputState::PlaceTile(tile) | InputState::BuyTile(tile) => {
                 ghost_tile(cursor.grid_pos, tile, framebuffer);

@@ -29,13 +29,14 @@ pub enum DroneTarget {
     Interact(vec2<ICoord>, DroneAction),
     PlaceTile(vec2<ICoord>, Tile),
     BuyTile(vec2<ICoord>, Tile),
-    // KillBug(Id),
+    KillBug(Id),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DroneAction {
     CutPlant,
     Collect,
+    KillBug(Id),
 }
 
 #[derive(Debug)]
@@ -154,7 +155,7 @@ impl Tile {
 }
 
 pub struct Grid {
-    tiles: HashMap<vec2<ICoord>, Tile>,
+    pub tiles: HashMap<vec2<ICoord>, Tile>,
 }
 
 impl Grid {

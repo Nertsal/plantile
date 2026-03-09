@@ -122,6 +122,26 @@ impl Model {
             | DroneTarget::Interact(pos, _)
             | DroneTarget::PlaceTile(pos, _)
             | DroneTarget::BuyTile(pos, _) => self.grid_visual.tile_bounds(pos).center(),
+            DroneTarget::KillBug(bug_id) => {
+                let bug = self.grid.tiles.iter().find(|(_, tile)| {
+                    if let Tile::Bug(bug) = tile
+                        && bug.id == bug_id
+                    {
+                        true
+                    } else {
+                        false
+                    }
+                });
+                match bug {
+                    Some((&pos, _)) => self.grid_visual.tile_bounds(pos).center(),
+                    None => {
+                        self.drone.target = DroneTarget::MoveTo(
+                            self.grid_visual.world_to_grid(self.drone.position),
+                        );
+                        return;
+                    }
+                }
+            }
         };
         let reach = r32(Drone::REACH);
         let offset = (self.drone.position - target_pos).clamp_len(..=reach);
@@ -182,6 +202,30 @@ impl Model {
                         DroneAction::Collect => {
                             self.collect(position);
                         }
+                        DroneAction::KillBug(_) => {
+                            // Invalid
+                        }
+                    }
+                }
+            }
+            DroneTarget::KillBug(bug_id) => {
+                self.drone.action_progress += delta_time;
+                if self.drone.action_progress >= R32::ONE {
+                    self.drone.action_progress = R32::ZERO;
+                    self.drone.target =
+                        DroneTarget::MoveTo(self.grid_visual.world_to_grid(self.drone.position));
+                    let bug = self.grid.tiles.iter().find(|(_, tile)| {
+                        if let Tile::Bug(bug) = tile
+                            && bug.id == bug_id
+                        {
+                            true
+                        } else {
+                            false
+                        }
+                    });
+                    if let Some((&pos, _)) = bug {
+                        // Kill bug
+                        self.grid.remove_tile(pos);
                     }
                 }
             }
