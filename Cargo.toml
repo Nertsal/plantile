@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 async-compat = "0.2.4"
 async-executor = "1.13.1"
+wasm-bindgen = { version = "=0.2.106", features = ["serde"] }
 clap = { version = "4.5.32", features = ["derive"] }
 geng = "0.18"
 geng-utils = "0.4.0"
