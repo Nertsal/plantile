@@ -1,4 +1,16 @@
 Config(
+    drone_acceleration: 20.0,
+    drone_deceleration: 10.0,
+    drone_max_speed: 20.0,
+    drone_reach: 0.5,
+
+    action_duration: {
+        CutPlant: 3.0,
+        Collect: 2.0,
+        PlaceTile: 2.0,
+        KillBug: 2.5,
+    },
+
     water_frequency: 0.2,
     water_lifetime: 10.0,
     poop_lifetime: 10.0,
@@ -13,7 +25,7 @@ Config(
     light_radius: 11,
     drainer_radius: 4,
     cutter_radius: 1,
-    cutter_cooldown: 5,
+    cutter_cooldown: 60,
 
     plants: {
         TypeA: (
