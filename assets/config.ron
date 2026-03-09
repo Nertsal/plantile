@@ -1,0 +1,107 @@
+Config(
+    water_frequency: 0.2,
+    water_lifetime: 10.0,
+    poop_lifetime: 10.0,
+
+    bug_frequency: 0.03,
+    bug_hunger: 5,
+    bug_eat_time: 1.0,
+    bug_poop_time: 3.0,
+    bug_chill_time: 10.0,
+    bug_move_time: 1.5,
+
+    light_radius: 17,
+    drainer_radius: 7,
+    cutter_radius: 1,
+    cutter_cooldown: 5,
+
+    plants: {
+        TypeA: (
+            growth_time: 0.5,
+            growth_time_dark: 2.0,
+            max_size: 15,
+            price: 2,
+        ),
+        TypeB: (
+            growth_time: 0.5,
+            growth_time_dark: 2.0,
+            max_size: 15,
+            price: 10,
+        ),
+        TypeC: (
+            growth_time: 0.5,
+            growth_time_dark: 2.0,
+            max_size: 6,
+            price: 50,
+        ),
+        TypeD: (
+            growth_time: 0.5,
+            growth_time_dark: 2.0,
+            max_size: 25,
+            price: 30,
+        ),
+    },
+
+    shop: [
+        (
+            price: 10,
+            unlocked_at: 0,
+            tile: Seed(TypeA),
+        ),
+        (
+            price: 10,
+            unlocked_at: 0,
+            tile: Wire(false),
+        ),
+        (
+            price: 30,
+            unlocked_at: 0,
+            tile: Soil(Dry),
+        ),
+        (
+            price: 60,
+            unlocked_at: 100,
+            tile: Seed(TypeB),
+        ),
+        (
+            price: 50,
+            unlocked_at: 30,
+            tile: Light(false),
+        ),
+        (
+            price: 300,
+            unlocked_at: 400,
+            tile: Drainer,
+        ),
+        (
+            price: 200,
+            unlocked_at: 300,
+            tile: Seed(TypeC),
+        ),
+        (
+            price: 160,
+            unlocked_at: 200,
+            tile: Cutter(()),
+        ),
+        (
+            price: 50,
+            unlocked_at: 400,
+            tile: Pipe(false),
+        ),
+        (
+            price: 500,
+            unlocked_at: 600,
+            tile: Seed(TypeD),
+        ),
+        (
+            price: 3000,
+            unlocked_at: 5000,
+            tile: Power,
+        ),
+        (
+            price: 1000,
+            unlocked_at: 1000,
+            tile: Sprinkler(false),
+        ),
+    ],
+)
