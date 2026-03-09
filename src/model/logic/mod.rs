@@ -61,6 +61,7 @@ impl Model {
                         self.grid.remove_tile(pos);
                     }
                 }
+                Tile::Bug(ref mut bug) => {}
             }
         }
 
@@ -90,6 +91,26 @@ impl Model {
                     self.grid
                         .set_tile(target, Tile::Water(self.config.water_lifetime));
                 }
+            }
+        }
+
+        // Bug
+        let chance = self.config.bug_frequency * delta_time;
+        if rng.gen_bool(chance.as_f32().into()) {
+            // attempt to spawn
+            let pos = vec2(rng.gen_range(-10..=10), rng.gen_range(0..10));
+            if self.grid.get_tile(pos).is_none() {
+                self.grid.set_tile(
+                    pos,
+                    Tile::Bug(Bug {
+                        id: self.next_id,
+                        state: BugState::Hungry {
+                            hunger: self.config.bug_hunger,
+                            eating_timer: self.config.bug_eat_timer,
+                        },
+                    }),
+                );
+                self.next_id += 1;
             }
         }
     }

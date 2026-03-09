@@ -6,6 +6,7 @@ pub type ICoord = i32;
 pub type FCoord = R32;
 pub type Time = R32;
 pub type Money = i32;
+pub type Id = usize;
 
 pub struct Model {
     pub camera: Camera2d,
@@ -14,6 +15,7 @@ pub struct Model {
     pub config: Config,
     pub unlocked_shop: Vec<Tile>,
 
+    pub next_id: Id,
     /// Actual logic data.
     pub grid: Grid,
     pub money: Money,
@@ -100,12 +102,26 @@ pub enum SoilState {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Bug {
+    pub id: Id,
+    pub state: BugState,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum BugState {
+    Hungry { hunger: usize, eating_timer: Time },
+    Pooping(Time),
+    Chilling(Time),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Tile {
     Seed(PlantKind),
     Leaf(Leaf),
     Light,
     Soil(SoilState),
     Water(Time),
+    Bug(Bug),
 }
 
 impl Tile {
@@ -125,6 +141,7 @@ impl Tile {
                 SoilState::Watered => "Soil",
             },
             Tile::Water(_) => "Water",
+            Tile::Bug(_) => "Bug",
         }
     }
 
@@ -255,8 +272,9 @@ impl Model {
             },
             unlocked_shop: Vec::new(),
 
+            next_id: 1,
             grid: Grid::new(),
-            money: 90,
+            money: 200,
             drone: Drone {
                 position: vec2::ZERO,
                 velocity: vec2::ZERO,

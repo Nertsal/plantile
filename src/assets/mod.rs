@@ -14,7 +14,11 @@ use geng_utils::gif::GifFrame;
 pub struct Config {
     pub water_frequency: R32,
     pub water_lifetime: Time,
-    // pub bug_frequency: R32,
+    pub bug_frequency: R32,
+    pub bug_hunger: usize,
+    pub bug_eat_timer: Time,
+    pub bug_chill_time: Time,
+    pub bug_move_time: Time,
     pub shop: Vec<ConfigShopItem>,
 }
 
@@ -113,6 +117,7 @@ pub struct SpritesTiles {
     pub soil: PixelTexture,
     // pub soil_rich: PixelTexture,
     pub water: PixelTexture,
+    pub bug: PixelTexture,
 }
 
 impl SpritesTiles {
@@ -132,6 +137,7 @@ impl SpritesTiles {
                 SoilState::Watered => &self.soil,
             },
             Tile::Water(_) => &self.water,
+            Tile::Bug(_) => &self.bug,
         }
     }
 }
