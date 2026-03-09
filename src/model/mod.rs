@@ -144,6 +144,7 @@ pub enum Tile {
     Wire(bool),
     Drainer,
     Cutter(Cutter),
+    Pipe(bool),
 }
 
 impl Tile {
@@ -171,6 +172,7 @@ impl Tile {
             Tile::Wire(_) => "Wire",
             Tile::Drainer => "Drainer",
             Tile::Cutter(_) => "Cutter",
+            Tile::Pipe(_) => "Pipe",
         }
     }
 

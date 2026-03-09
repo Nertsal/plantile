@@ -61,8 +61,13 @@ impl GameRender {
             };
             let texture = sprites.tiles.get_texture(tile.tile);
             let mult = match *tile.tile {
-                Tile::Light(power) | Tile::Wire(power) => {
-                    if power {
+                Tile::Light(connected)
+                | Tile::Wire(connected)
+                | Tile::Cutter(Cutter {
+                    powered: connected, ..
+                })
+                | Tile::Pipe(connected) => {
+                    if connected {
                         1.0
                     } else {
                         0.5

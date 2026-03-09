@@ -77,5 +77,10 @@ Config(
             unlocked_at: 200,
             tile: Cutter(()),
         ),
+        (
+            price: 50,
+            unlocked_at: 400,
+            tile: Pipe(false),
+        ),
     ],
 )

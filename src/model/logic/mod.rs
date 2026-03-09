@@ -280,6 +280,20 @@ impl Model {
                         }
                     }
                 }
+                Tile::Pipe(_) => {
+                    let mut piped = false;
+                    get_all_connected(&self.grid, pos, |tile| {
+                        if let Tile::Drainer = tile.tile {
+                            piped = true;
+                        }
+                        matches!(tile.tile, Tile::Drainer | Tile::Pipe(_))
+                    });
+                    if let Some(tile) = self.grid.get_tile_mut(pos)
+                        && let Tile::Pipe(connected) = tile.tile
+                    {
+                        *connected = piped;
+                    }
+                }
             }
         }
 
