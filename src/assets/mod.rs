@@ -14,13 +14,18 @@ use geng_utils::gif::GifFrame;
 pub struct Config {
     pub water_frequency: R32,
     pub water_lifetime: Time,
+
     pub bug_frequency: R32,
     pub bug_hunger: usize,
     pub bug_eat_time: Time,
     pub bug_poop_time: Time,
     pub bug_chill_time: Time,
     pub bug_move_time: Time,
+
     pub light_radius: ICoord,
+
+    pub plant_growth_time: Time,
+
     pub shop: Vec<ConfigShopItem>,
 }
 

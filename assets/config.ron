@@ -2,7 +2,7 @@ Config(
     water_frequency: 0.1,
     water_lifetime: 10.0,
 
-    bug_frequency: 0.05,
+    bug_frequency: 0.03,
     bug_hunger: 5,
     bug_eat_time: 1.0,
     bug_poop_time: 3.0,
@@ -10,6 +10,8 @@ Config(
     bug_move_time: 1.5,
 
     light_radius: 17,
+
+    plant_growth_time: 0.5,
 
     shop: [
         (

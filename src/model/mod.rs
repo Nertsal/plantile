@@ -76,9 +76,9 @@ pub struct Leaf {
 }
 
 impl Leaf {
-    pub fn new(kind: PlantKind) -> Self {
+    pub fn new(kind: PlantKind, growth_time: Time) -> Self {
         Self {
-            growth_timer: Some(r32(0.5)),
+            growth_timer: Some(growth_time),
             root: false,
             kind,
         }

@@ -49,8 +49,10 @@ impl Model {
                         });
                     if let Some((soil_pos, _soil_state)) = soil {
                         // Grow into a plant
-                        self.grid
-                            .set_tile(pos, Tile::Leaf(Leaf::new(plant_kind).root()));
+                        self.grid.set_tile(
+                            pos,
+                            Tile::Leaf(Leaf::new(plant_kind, self.config.plant_growth_time).root()),
+                        );
                         self.grid.set_tile(soil_pos, Tile::Soil(SoilState::Dry));
                     }
                 }
