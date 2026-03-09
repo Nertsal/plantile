@@ -116,6 +116,22 @@ pub enum BugState {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(default)]
+pub struct Cutter {
+    pub powered: bool,
+    pub cooldown: Time,
+}
+
+impl Default for Cutter {
+    fn default() -> Self {
+        Self {
+            powered: false,
+            cooldown: R32::ONE,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Tile {
     Seed(PlantKind),
     Leaf(Leaf),
@@ -127,6 +143,7 @@ pub enum Tile {
     Power,
     Wire(bool),
     Drainer,
+    Cutter(Cutter),
 }
 
 impl Tile {
@@ -153,6 +170,7 @@ impl Tile {
             Tile::Power => "Power",
             Tile::Wire(_) => "Wire",
             Tile::Drainer => "Drainer",
+            Tile::Cutter(_) => "Cutter",
         }
     }
 
@@ -177,7 +195,10 @@ impl Tile {
     }
 
     pub fn transmits_power(&self) -> bool {
-        matches!(self, Tile::Power | Tile::Wire(_) | Tile::Light(_))
+        matches!(
+            self,
+            Tile::Power | Tile::Wire(_) | Tile::Light(_) | Tile::Cutter(_)
+        )
     }
 }
 

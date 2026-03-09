@@ -177,7 +177,7 @@ impl Model {
                                     if *eating_timer <= Time::ZERO {
                                         *eating_timer = self.config.bug_eat_time;
                                         *hunger -= 1;
-                                        self.grid.remove_tile(target);
+                                        self.cut_plant_tile(target, false);
                                     }
                                 }
                             } else {
@@ -247,10 +247,91 @@ impl Model {
                         self.collect(water);
                     }
                 }
+                Tile::Cutter(_) => {
+                    let mut powered = false;
+                    get_all_connected(&self.grid, pos, |tile| {
+                        if let Tile::Power = tile.tile {
+                            powered = true;
+                        }
+                        tile.tile.transmits_power()
+                    });
+                    if let Some(tile) = self.grid.get_tile_mut(pos)
+                        && let Tile::Cutter(cutter) = tile.tile
+                    {
+                        cutter.powered = powered;
+                        if powered {
+                            cutter.cooldown -= delta_time;
+                            if cutter.cooldown <= Time::ZERO {
+                                // Cut down a nearby plant
+                                cutter.cooldown = self.config.cutter_cooldown;
+                                let plant = self
+                                    .grid
+                                    .all_tiles()
+                                    .find(|tile| {
+                                        manhattan_distance(pos, tile.pos)
+                                            <= self.config.cutter_radius
+                                            && matches!(tile.tile, Tile::Leaf(_))
+                                    })
+                                    .map(|tile| tile.pos);
+                                if let Some(plant) = plant {
+                                    self.cut_plant_tile(plant, true);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
         self.rng_spawn(delta_time);
+    }
+
+    fn cut_plant_tile(&mut self, target: vec2<ICoord>, earn_money: bool) {
+        let Some(tile) = self.grid.get_tile(target) else {
+            return;
+        };
+        let Tile::Leaf(leaf) = tile.tile else { return };
+        let config = &self.config.plants[&leaf.kind];
+        if earn_money {
+            self.money += config.price;
+        }
+        self.grid.remove_tile(target);
+
+        let mut lost_plants = Vec::new();
+        for tile in self.grid.get_neighbors(target) {
+            if lost_plants.contains(&tile.pos) {
+                continue;
+            }
+            if let Tile::Leaf(leaf) = tile.tile {
+                // Check connectivity to root
+                let mut rooted = false;
+                let group = get_all_connected(&self.grid, tile.pos, |other| {
+                    if let Tile::Leaf(other) = other.tile
+                        && other.kind == leaf.kind
+                    {
+                        if other.root {
+                            rooted = true;
+                        }
+                        true
+                    } else {
+                        false
+                    }
+                });
+                if !rooted {
+                    lost_plants.extend(group);
+                }
+            }
+        }
+
+        for tile in lost_plants {
+            if let Some(tile) = self.grid.remove_tile(tile)
+                && earn_money
+                && let Tile::Leaf(leaf) = tile.tile
+            {
+                let config = &self.config.plants[&leaf.kind];
+                self.money += config.price;
+            }
+        }
     }
 
     fn rng_spawn(&mut self, delta_time: Time) {

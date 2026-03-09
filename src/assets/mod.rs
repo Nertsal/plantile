@@ -25,6 +25,8 @@ pub struct Config {
 
     pub light_radius: ICoord,
     pub drainer_radius: ICoord,
+    pub cutter_radius: ICoord,
+    pub cutter_cooldown: Time,
 
     pub plants: HashMap<PlantKind, ConfigPlant>,
     pub shop: Vec<ConfigShopItem>,
@@ -140,6 +142,7 @@ pub struct SpritesTiles {
     pub power: PixelTexture,
     pub wire: PixelTexture,
     pub drain: PixelTexture,
+    pub cutter: PixelTexture,
 }
 
 impl SpritesTiles {
@@ -166,6 +169,7 @@ impl SpritesTiles {
             Tile::Power => &self.power,
             Tile::Wire(_) => &self.wire,
             Tile::Drainer => &self.drain,
+            Tile::Cutter(_) => &self.cutter,
         }
     }
 }

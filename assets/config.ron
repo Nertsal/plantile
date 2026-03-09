@@ -12,6 +12,8 @@ Config(
 
     light_radius: 17,
     drainer_radius: 7,
+    cutter_radius: 1,
+    cutter_cooldown: 5,
 
     plants: {
         TypeA: (
@@ -69,6 +71,11 @@ Config(
             price: 200,
             unlocked_at: 300,
             tile: Seed(TypeC),
+        ),
+        (
+            price: 160,
+            unlocked_at: 200,
+            tile: Cutter(()),
         ),
     ],
 )
