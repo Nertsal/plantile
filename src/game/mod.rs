@@ -51,7 +51,7 @@ impl GameState {
     }
 
     fn left_click(&mut self) {
-        if self.ui.inventory.hovered {
+        if self.ui.inventory.hovered || self.ui.shop.hovered {
             // Focus UI first
             return;
         }

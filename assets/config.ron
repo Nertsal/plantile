@@ -21,6 +21,11 @@ Config(
             tile: Seed(TypeA),
         ),
         (
+            price: 10,
+            unlocked_at: 0,
+            tile: Wire(false),
+        ),
+        (
             price: 30,
             unlocked_at: 0,
             tile: Soil(Dry),
@@ -30,5 +35,15 @@ Config(
             unlocked_at: 100,
             tile: Seed(TypeB),
         ),
+        (
+            price: 50,
+            unlocked_at: 30,
+            tile: Light(false),
+        ),
+        // (
+        //     price: 300,
+        //     unlocked_at: 400,
+        //     tile: Drainer,
+        // ),
     ],
 )

@@ -227,7 +227,7 @@ impl GameRender {
         self.util.draw_nine_slice(
             ui.shop.position,
             Color::WHITE,
-            &sprites.ui_window_shop,
+            &sprites.ui_window,
             pixel_scale,
             &geng::PixelPerfectCamera,
             framebuffer,
