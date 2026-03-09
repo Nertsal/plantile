@@ -107,6 +107,26 @@ pub enum Tile {
     Soil(SoilState),
 }
 
+impl Tile {
+    pub fn name(&self) -> &'static str {
+        match self {
+            Tile::Seed(kind) => match kind {
+                PlantKind::TypeA => "Seed (A)",
+                PlantKind::TypeB => "Seed (B)",
+            },
+            Tile::Leaf(leaf) => match leaf.kind {
+                PlantKind::TypeA => "Leaf (A)",
+                PlantKind::TypeB => "Leaf (B)",
+            },
+            Tile::Light => "Light",
+            Tile::Soil(state) => match state {
+                SoilState::Dry => "Dry Soil",
+                SoilState::Watered => "Soil",
+            },
+        }
+    }
+}
+
 pub struct Grid {
     tiles: HashMap<vec2<ICoord>, Tile>,
 }

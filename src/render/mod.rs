@@ -37,6 +37,7 @@ impl GameRender {
     ) {
         let assets = &self.context.assets;
         let sprites = &assets.sprites;
+        let palette = &assets.palette;
 
         // Grid
         for x in -20..20 {
@@ -63,17 +64,35 @@ impl GameRender {
                 .draw_on_tile(&model.grid_visual, pos, texture, &model.camera, framebuffer);
         }
 
-        let tile_highlight =
-            |pos: vec2<ICoord>, color: Color, framebuffer: &mut ugli::Framebuffer| {
-                self.util.draw_on_tile_with(
-                    &model.grid_visual,
-                    pos,
-                    color,
-                    &sprites.tile_select,
+        let tile_highlight = |pos: vec2<ICoord>,
+                              color: Color,
+                              framebuffer: &mut ugli::Framebuffer| {
+            self.util.draw_on_tile_with(
+                &model.grid_visual,
+                pos,
+                color,
+                &sprites.tile_select,
+                &model.camera,
+                framebuffer,
+            );
+            if let Some(tile) = model.grid.get_tile(pos) {
+                let name = tile.tile.name().to_uppercase();
+                let tile_bounds = model.grid_visual.tile_bounds(pos).as_f32();
+                let select_size = sprites.tile_select.size().as_f32() / TILE_SIZE_PIXELS.as_f32();
+                let select_bounds = tile_bounds.align_aabb(select_size, vec2(0.5, 0.5));
+                let position = select_bounds.align_pos(vec2(0.0, 1.0)) + vec2(0.1, 0.0);
+                self.util.draw_text(
+                    name,
+                    position,
+                    &assets.fonts.aseprite,
+                    TextRenderOptions::new(0.3)
+                        .align(vec2(0.0, 0.0))
+                        .color(crate::util::with_alpha(palette.text, color.a)),
                     &model.camera,
                     framebuffer,
                 );
-            };
+            }
+        };
         let ghost_tile =
             |pos: vec2<ICoord>, tile: &Tile, framebuffer: &mut ugli::Framebuffer<'_>| {
                 if model.grid.get_tile(pos).is_none() {
