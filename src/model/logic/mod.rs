@@ -10,26 +10,77 @@ impl Model {
         // Update tiles
         let update_order: Vec<vec2<ICoord>> = self.grid.all_positions().collect();
         for pos in update_order {
-            let Some(tile) = self.grid.get_tile(pos) else {
+            let Some(tile) = self.grid.get_tile_mut(pos) else {
                 continue;
             };
-            match &tile.tile {
-                Tile::Leaf(_) => self.update_plant(tile.pos, delta_time),
+            match *tile.tile {
+                Tile::Leaf(_) => self.update_plant(pos, delta_time),
                 Tile::Light => {}
                 Tile::Seed(plant_kind) => {
                     let soil = self
                         .grid
-                        .get_neighbors(tile.pos)
+                        .get_neighbors(pos)
                         .find(|neighbor| matches!(neighbor.tile, Tile::Soil(_)))
                         .map(|neighbor| neighbor.pos);
                     if let Some(soil) = soil {
                         // Grow into a plant
                         self.grid
-                            .set_tile(tile.pos, Tile::Leaf(Leaf::new(*plant_kind).root()));
+                            .set_tile(pos, Tile::Leaf(Leaf::new(plant_kind).root()));
                         self.grid.set_tile(soil, Tile::Soil(SoilState::Dry));
                     }
                 }
-                Tile::Soil(_state) => {}
+                Tile::Soil(state) => match state {
+                    SoilState::Dry => {
+                        let water = self
+                            .grid
+                            .get_neighbors(pos)
+                            .find(|tile| matches!(tile.tile, Tile::Water(_)));
+                        if let Some(water) = water {
+                            self.grid.remove_tile(water.pos);
+                            let soil = self.grid.get_tile_mut(pos).unwrap();
+                            if let Tile::Soil(state) = soil.tile {
+                                *state = SoilState::Watered;
+                            }
+                        }
+                    }
+                    SoilState::Watered => {}
+                },
+                Tile::Water(ref mut lifetime) => {
+                    *lifetime -= delta_time;
+                    if *lifetime <= Time::ZERO {
+                        // Evaporate
+                        self.grid.remove_tile(pos);
+                    }
+                }
+            }
+        }
+
+        self.rng_spawn(delta_time);
+    }
+
+    fn rng_spawn(&mut self, delta_time: Time) {
+        let mut rng = thread_rng();
+
+        // Water
+        let chance = self.config.water_frequency * delta_time;
+        if rng.gen_bool(chance.as_f32().into()) {
+            // attempt to spawn
+            let anchors = self.grid.all_positions().filter(|pos| {
+                self.grid.get_tile(*pos).is_some_and(|tile| {
+                    if let Tile::Leaf(leaf) = tile.tile {
+                        leaf.growth_timer.is_some()
+                    } else {
+                        false
+                    }
+                })
+            });
+            if let Some(anchor) = anchors.choose(&mut rng) {
+                let offset = vec2(rng.gen_range(-2..=2), rng.gen_range(-2..=2));
+                let target = anchor + offset;
+                if self.grid.get_tile(target).is_none() {
+                    self.grid
+                        .set_tile(target, Tile::Water(self.config.water_lifetime));
+                }
             }
         }
     }

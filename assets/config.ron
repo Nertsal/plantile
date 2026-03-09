@@ -1,4 +1,6 @@
 Config(
+    water_frequency: 0.25,
+    water_lifetime: 10.0,
     shop: [
         (
             price: 10,

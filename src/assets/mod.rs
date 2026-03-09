@@ -12,6 +12,9 @@ use geng_utils::gif::GifFrame;
 #[derive(geng::asset::Load, Serialize, Deserialize, Debug, Clone)]
 #[load(serde = "ron")]
 pub struct Config {
+    pub water_frequency: R32,
+    pub water_lifetime: Time,
+    // pub bug_frequency: R32,
     pub shop: Vec<ConfigShopItem>,
 }
 
@@ -109,6 +112,7 @@ pub struct SpritesTiles {
     pub soil_dry: PixelTexture,
     pub soil: PixelTexture,
     // pub soil_rich: PixelTexture,
+    pub water: PixelTexture,
 }
 
 impl SpritesTiles {
@@ -127,6 +131,7 @@ impl SpritesTiles {
                 SoilState::Dry => &self.soil_dry,
                 SoilState::Watered => &self.soil,
             },
+            Tile::Water(_) => &self.water,
         }
     }
 }

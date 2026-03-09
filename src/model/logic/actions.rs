@@ -12,7 +12,7 @@ impl Model {
         self.drone.target = match &tile.tile {
             // Tile::Bug(bug_id) => self.drone.target = DroneTarget::KillBug(bug_id),
             Tile::Leaf(_) => DroneTarget::Interact(target, DroneAction::CutPlant),
-            Tile::Seed(_) => DroneTarget::Interact(target, DroneAction::Collect),
+            _ if tile.tile.is_collectable() => DroneTarget::Interact(target, DroneAction::Collect),
             _ => DroneTarget::MoveTo(target),
         };
     }
@@ -81,8 +81,12 @@ impl Model {
         };
         log::debug!("collect {}: {:?}", target, tile.tile);
 
-        if let Tile::Seed(_) = tile.tile {
-            let tile = self.grid.remove_tile(target).unwrap();
+        if tile.tile.is_collectable() {
+            let mut tile = self.grid.remove_tile(target).unwrap();
+            match &mut tile.tile {
+                Tile::Water(lifetime) => *lifetime = self.config.water_lifetime,
+                _ => {}
+            }
             self.inventory_add(tile.tile, 1);
         }
     }

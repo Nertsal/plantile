@@ -92,7 +92,7 @@ pub struct Positioned<T> {
     pub tile: T,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum SoilState {
     Dry,
     Watered,
@@ -105,6 +105,7 @@ pub enum Tile {
     Leaf(Leaf),
     Light,
     Soil(SoilState),
+    Water(Time),
 }
 
 impl Tile {
@@ -123,7 +124,15 @@ impl Tile {
                 SoilState::Dry => "Dry Soil",
                 SoilState::Watered => "Soil",
             },
+            Tile::Water(_) => "Water",
         }
+    }
+
+    pub fn is_collectable(&self) -> bool {
+        matches!(
+            self,
+            Tile::Seed(_) | Tile::Light | Tile::Soil(_) | Tile::Water(_)
+        )
     }
 }
 
