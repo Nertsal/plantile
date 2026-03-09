@@ -193,6 +193,9 @@ impl Tile {
                 | Tile::Poop(_)
                 | Tile::Power
                 | Tile::Wire(_)
+                | Tile::Pipe(_)
+                | Tile::Cutter(_)
+                | Tile::Sprinkler(_)
         )
     }
 
