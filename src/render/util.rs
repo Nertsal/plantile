@@ -200,6 +200,46 @@ impl UtilRender {
         );
     }
 
+    pub fn draw_text_gold(
+        &self,
+        gold: Money,
+        position: vec2<impl Float>,
+        font: &Font,
+        options: TextRenderOptions,
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
+        let position = position.map(|x| x.as_f32());
+
+        let full_text = format!("{}g", gold);
+        let full_size = font.measure(&full_text, options.size);
+        let full_size = full_size.translate(position - full_size.align_pos(options.align));
+
+        self.draw_text(
+            gold.to_string(),
+            full_size.align_pos(vec2(0.0, 0.5)),
+            font,
+            TextRenderOptions {
+                align: vec2(0.0, 0.5),
+                ..options
+            },
+            camera,
+            framebuffer,
+        );
+        self.draw_text(
+            "g",
+            full_size.align_pos(vec2(1.0, 0.5)),
+            font,
+            TextRenderOptions {
+                align: vec2(1.0, 0.5),
+                color: self.context.assets.palette.gold,
+                ..options
+            },
+            camera,
+            framebuffer,
+        );
+    }
+
     pub fn draw_text(
         &self,
         text: impl AsRef<str>,
@@ -248,7 +288,7 @@ impl UtilRender {
             vec2::splat(std::f32::consts::FRAC_1_SQRT_2),
         ) - crate::util::world_to_screen(camera, framebuffer_size, vec2::ZERO);
         options.size *= scale.len();
-        let font_size = options.size * 0.6; // TODO: could rescale all dependent code but whatever
+        let font_size = options.size;
 
         let mut position = position;
         for line in text.lines() {

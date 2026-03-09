@@ -182,7 +182,7 @@ impl UiContext {
     pub fn new(context: Context) -> Self {
         Self {
             // geometry: GeometryContext::new(context.assets.clone()),
-            font: context.assets.fonts.default.clone(),
+            font: context.assets.fonts.aseprite.clone(),
 
             // state: UiState::new(),
             cursor: CursorContext::new(),

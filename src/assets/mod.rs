@@ -85,6 +85,7 @@ fn load_gif(
 pub struct Palette {
     pub background: Color,
     pub text: Color,
+    pub gold: Color,
 }
 
 #[derive(geng::asset::Load)]
@@ -145,7 +146,8 @@ pub struct Shaders {
 
 #[derive(geng::asset::Load)]
 pub struct Fonts {
-    pub default: Rc<Font>,
+    // pub default: Rc<Font>,
+    pub aseprite: Rc<Font>,
 }
 
 #[derive(Clone)]

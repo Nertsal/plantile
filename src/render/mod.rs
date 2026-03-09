@@ -133,6 +133,7 @@ impl GameRender {
         let palette = &self.context.assets.palette;
 
         let pixel_scale = get_pixel_scale(framebuffer.size());
+        let font_size = 12.0 * pixel_scale;
 
         // Inventory
         self.util.draw_nine_slice(
@@ -155,8 +156,8 @@ impl GameRender {
             self.util.draw_text(
                 count.to_string(),
                 pos,
-                &self.context.assets.fonts.default,
-                TextRenderOptions::new(20.0 * pixel_scale)
+                &self.context.assets.fonts.aseprite,
+                TextRenderOptions::new(font_size)
                     .color(palette.text)
                     .align(vec2(0.5, 0.0)),
                 &geng::PixelPerfectCamera,
@@ -204,11 +205,11 @@ impl GameRender {
                     widget.position.align_pos(vec2(0.5, 1.0)) + vec2(0.0, 3.0) * pixel_scale,
                 ),
             };
-            self.util.draw_text(
-                format!("{}g", cost),
+            self.util.draw_text_gold(
+                cost,
                 pos,
-                &self.context.assets.fonts.default,
-                TextRenderOptions::new(20.0 * pixel_scale)
+                &self.context.assets.fonts.aseprite,
+                TextRenderOptions::new(font_size)
                     .color(palette.text)
                     .align(vec2(0.5, 0.0)),
                 &geng::PixelPerfectCamera,
@@ -226,11 +227,11 @@ impl GameRender {
             framebuffer,
         );
         let pos = ui.gold.position.extend_uniform(-0.0 * pixel_scale);
-        self.util.draw_text(
-            format!("{}g", model.money),
+        self.util.draw_text_gold(
+            model.money,
             pos.center(),
-            &self.context.assets.fonts.default,
-            TextRenderOptions::new(20.0 * pixel_scale)
+            &self.context.assets.fonts.aseprite,
+            TextRenderOptions::new(font_size)
                 .color(palette.text)
                 .align(vec2(0.5, 0.5)),
             &geng::PixelPerfectCamera,
