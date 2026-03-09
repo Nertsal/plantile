@@ -150,7 +150,7 @@ impl GameRender {
                     &assets.fonts.aseprite,
                     TextRenderOptions::new(0.3)
                         .align(vec2(0.0, 0.0))
-                        .color(crate::util::with_alpha(palette.text, color.a)),
+                        .color(palette.text),
                     &model.camera,
                     framebuffer,
                 );
@@ -170,6 +170,52 @@ impl GameRender {
                     );
                 }
             };
+
+        let tile_description = |pos: vec2<ICoord>, framebuffer: &mut ugli::Framebuffer<'_>| {
+            let Some(tile) = model.grid.get_tile(pos) else {
+                return;
+            };
+            let text = tile.tile.description();
+            if text.is_empty() {
+                return;
+            }
+
+            let pos = model.grid_visual.tile_bounds(pos).as_f32();
+            let pos = Aabb2::point(pos.align_pos(vec2(0.0, 0.0)))
+                .extend_right(6.0)
+                .extend_down(2.2);
+            self.util.draw_nine_slice(
+                pos,
+                Color::new(1.0, 1.0, 1.0, 0.8),
+                &sprites.ui_window,
+                model.grid_visual.tile_size.y.as_f32() / TILE_SIZE_PIXELS.y as f32,
+                &model.camera,
+                framebuffer,
+            );
+
+            let size = 0.5;
+            let pos = pos.extend_uniform(-0.1);
+            let lines = crate::util::wrap_text(
+                &self.context.assets.fonts.aseprite,
+                text,
+                pos.width() / size,
+            );
+            let row = pos.align_aabb(vec2(pos.width(), size), vec2(0.5, 1.0));
+            let rows = row.stack(vec2(0.0, -row.height()), lines.len());
+
+            for (line, position) in lines.into_iter().zip(rows) {
+                self.util.draw_text(
+                    line,
+                    position.align_pos(vec2(0.0, 0.5)),
+                    &self.context.assets.fonts.aseprite,
+                    TextRenderOptions::new(size)
+                        .color(crate::util::with_alpha(palette.text, 1.0))
+                        .align(vec2(0.0, 0.5)),
+                    &model.camera,
+                    framebuffer,
+                );
+            }
+        };
 
         // Drone action
         match model.drone.target {
@@ -209,6 +255,7 @@ impl GameRender {
                         Color::new(0.7, 0.7, 0.7, 0.5)
                     };
                     tile_highlight(target, color, framebuffer);
+                    tile_description(target, framebuffer);
                 }
                 InputState::PlaceTile(tile) | InputState::BuyTile(tile) => {
                     ghost_tile(target, tile, framebuffer);

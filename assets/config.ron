@@ -33,7 +33,7 @@ Config(
             growth_time: 3.0,
             growth_time_dark: 10.0,
             max_size: 15,
-            price: 2,
+            price: 3,
         ),
         TypeB: (
             growth_time: 10.0,
@@ -73,7 +73,7 @@ Config(
         ),
         (
             price: 60,
-            unlocked_at: 100,
+            unlocked_at: 60,
             tile: Seed(TypeB),
         ),
         (
@@ -88,7 +88,7 @@ Config(
         ),
         (
             price: 200,
-            unlocked_at: 300,
+            unlocked_at: 200,
             tile: Seed(TypeC),
         ),
         (
@@ -103,7 +103,7 @@ Config(
         ),
         (
             price: 500,
-            unlocked_at: 600,
+            unlocked_at: 500,
             tile: Seed(TypeD),
         ),
         (

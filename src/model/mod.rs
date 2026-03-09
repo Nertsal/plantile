@@ -178,6 +178,41 @@ impl Tile {
         }
     }
 
+    pub fn description(&self) -> &'static str {
+        match self {
+            Tile::Seed(kind) => match kind {
+                PlantKind::TypeA => "Grows from Dry Soil",
+                PlantKind::TypeB => "Grows from Soil",
+                PlantKind::TypeC => "Grows from Water",
+                PlantKind::TypeD => "Grows from Rich Soil",
+            },
+            Tile::Leaf(leaf) => match leaf.kind {
+                PlantKind::TypeA => "Sells for 3g",
+                PlantKind::TypeB => "Sells for 10g",
+                PlantKind::TypeC => "Sells for 50g",
+                PlantKind::TypeD => "Sells for 30g",
+            },
+            Tile::Light(_) => "Plants grow within range\nrequires Power",
+            Tile::Soil(state) => match state {
+                SoilState::Dry => "",
+                SoilState::Watered => "",
+                SoilState::Rich => "",
+            },
+            Tile::Water(_) => "",
+            Tile::Bug(_) => "Eats Plants and produces Poop",
+            Tile::Poop(_) => "Can be used to nourish the soil",
+            Tile::Power => "Provides power to connected tiles",
+            Tile::Wire(_) => "",
+            Tile::Drainer => {
+                "Collects Water within range to your inventory or to connected Sprinklers"
+            }
+            Tile::Cutter(_) => "Automatically cuts adjacent Plants\nrequires Power",
+            Tile::Pipe(_) => "",
+            Tile::Sprinkler(_) => "Ejects water on adjacent tiles",
+            Tile::Rock => "",
+        }
+    }
+
     pub fn update_order(&self) -> i32 {
         match self {
             Tile::Drainer => 100, // After soil and seed so it takes water first
@@ -358,7 +393,7 @@ impl Model {
 
             next_id: 1,
             grid: Grid::new(),
-            money: 10000000,
+            money: 0,
             drone: Drone {
                 position: vec2::ZERO,
                 velocity: vec2::ZERO,
