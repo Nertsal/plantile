@@ -4,6 +4,7 @@ const SPLIT_CHANCE: f32 = 0.1;
 
 impl Model {
     pub fn update_plant(&mut self, position: vec2<ICoord>, delta_time: Time) {
+        let is_lit = self.grid.is_tile_lit(position, &self.config);
         let Some(mut plant) = self.grid.get_tile_mut(position) else {
             return;
         };
@@ -17,7 +18,11 @@ impl Model {
         // Update growth timer
         let mut grow = false;
         if let Some(timer) = &mut leaf.growth_timer {
-            let growth_time = plant_config.growth_time;
+            let growth_time = if is_lit {
+                plant_config.growth_time
+            } else {
+                plant_config.growth_time_dark
+            };
             *timer -= delta_time / growth_time;
             if *timer <= Time::ZERO {
                 // Attempt to grow

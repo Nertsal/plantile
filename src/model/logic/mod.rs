@@ -423,20 +423,23 @@ impl Model {
         let chance = self.config.bug_frequency * delta_time;
         if rng.gen_bool(chance.as_f32().into()) {
             // attempt to spawn
-            let pos = vec2(rng.gen_range(-10..=10), rng.gen_range(0..10));
-            if self.grid.get_tile(pos).is_none() {
-                self.grid.set_tile(
-                    pos,
-                    Tile::Bug(Bug {
-                        id: self.next_id,
-                        state: BugState::Hungry {
-                            hunger: self.config.bug_hunger,
-                            eating_timer: self.config.bug_eat_time,
-                        },
-                        move_timer: self.config.bug_move_time,
-                    }),
-                );
-                self.next_id += 1;
+            for _ in 0..10 {
+                let pos = vec2(rng.gen_range(-10..=10), rng.gen_range(0..10));
+                if self.grid.get_tile(pos).is_none() && !self.grid.is_tile_lit(pos, &self.config) {
+                    self.grid.set_tile(
+                        pos,
+                        Tile::Bug(Bug {
+                            id: self.next_id,
+                            state: BugState::Hungry {
+                                hunger: self.config.bug_hunger,
+                                eating_timer: self.config.bug_eat_time,
+                            },
+                            move_timer: self.config.bug_move_time,
+                        }),
+                    );
+                    self.next_id += 1;
+                    break;
+                }
             }
         }
     }
@@ -611,9 +614,9 @@ fn get_all_connected(
     connected
 }
 
-pub fn aabb_contains(aabb: Aabb2<ICoord>, pos: vec2<ICoord>) -> bool {
-    aabb.min.x <= pos.x && aabb.min.y <= pos.y && aabb.max.x >= pos.x && aabb.max.y >= pos.y
-}
+// pub fn aabb_contains(aabb: Aabb2<ICoord>, pos: vec2<ICoord>) -> bool {
+//     aabb.min.x <= pos.x && aabb.min.y <= pos.y && aabb.max.x >= pos.x && aabb.max.y >= pos.y
+// }
 
 pub fn manhattan_distance(a: vec2<ICoord>, b: vec2<ICoord>) -> ICoord {
     (a.x - b.x).abs() + (a.y - b.y).abs()

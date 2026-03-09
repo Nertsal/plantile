@@ -278,19 +278,10 @@ impl Grid {
             .filter_map(move |offset| self.get_tile(pos + offset))
     }
 
-    // pub fn is_tile_lit(&self, pos: vec2<ICoord>) -> bool {
-    //     self.lights.iter().any(|light| {
-    //         let dx = if pos.x < light.pos.min.x {
-    //             light.pos.min.x - pos.x
-    //         } else if pos.x > light.pos.max.x {
-    //             pos.x - light.pos.max.x
-    //         } else {
-    //             0
-    //         };
-    //         let dy = light.pos.min.y - pos.y;
-    //         dy > 0 && dy >= dx
-    //     })
-    // }
+    pub fn is_tile_lit(&self, pos: vec2<ICoord>, config: &Config) -> bool {
+        self.all_tiles()
+            .any(|light| logic::manhattan_distance(pos, light.pos) <= config.light_radius)
+    }
 }
 
 pub struct GridVisual {

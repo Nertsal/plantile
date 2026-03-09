@@ -18,25 +18,25 @@ Config(
     plants: {
         TypeA: (
             growth_time: 3.0,
-            growth_time_dark: 6.0,
+            growth_time_dark: 10.0,
             max_size: 15,
             price: 2,
         ),
         TypeB: (
             growth_time: 3.0,
-            growth_time_dark: 6.0,
+            growth_time_dark: 10.0,
             max_size: 15,
             price: 10,
         ),
         TypeC: (
             growth_time: 3.0,
-            growth_time_dark: 6.0,
+            growth_time_dark: 10.0,
             max_size: 6,
             price: 50,
         ),
         TypeD: (
             growth_time: 3.0,
-            growth_time_dark: 6.0,
+            growth_time_dark: 10.0,
             max_size: 25,
             price: 30,
         ),
