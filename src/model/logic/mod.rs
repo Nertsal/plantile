@@ -27,8 +27,16 @@ impl Model {
                     if timer.remaining <= Time::ZERO {
                         tile.tile.state = TileState::Idle;
                     }
+                    continue;
                 }
                 TileState::Idle => {}
+                TileState::Despawning(timer) => {
+                    timer.remaining -= delta_time / self.config.animations.tile_despawn;
+                    if timer.remaining <= Time::ZERO {
+                        self.grid.remove_tile(pos);
+                    }
+                    continue;
+                }
             }
 
             match tile.tile.kind {
@@ -37,10 +45,12 @@ impl Model {
                 TileKind::Light(_) | TileKind::Wire(_) => {
                     let mut powered = false;
                     get_all_connected(&self.grid, pos, |tile| {
-                        if let TileKind::Power = tile.tile {
+                        if tile.tile.state.interactive()
+                            && let TileKind::Power = tile.tile.kind
+                        {
                             powered = true;
                         }
-                        tile.tile.transmits_power()
+                        tile.tile.state.interactive() && tile.tile.kind.transmits_power()
                     });
                     if let Some(tile) = self.grid.get_tile_mut(pos)
                         && let TileKind::Light(power) | TileKind::Wire(power) = &mut tile.tile.kind
@@ -58,12 +68,13 @@ impl Model {
                             .map(|tile| tile.pos);
                         if let Some(water) = water {
                             // Grow into a plant
-                            // TODO: animation
                             self.grid.set_tile(
                                 pos,
                                 Tile::new(TileKind::Leaf(Leaf::new(plant_kind).root())),
                             );
-                            self.grid.remove_tile(water);
+                            if let Some(water) = self.grid.get_tile_mut(water) {
+                                water.tile.state.despawn();
+                            }
                         }
                         continue;
                     }
@@ -101,11 +112,18 @@ impl Model {
                         let water = self
                             .grid
                             .get_neighbors(pos)
-                            .find(|tile| matches!(tile.tile.kind, TileKind::Water(_)));
-                        if let Some(water) = water {
-                            self.grid.remove_tile(water.pos);
+                            .find(|tile| {
+                                tile.tile.state.interactive()
+                                    && matches!(tile.tile.kind, TileKind::Water(_))
+                            })
+                            .map(|tile| tile.pos);
+                        if let Some(water) = water
+                            && let Some(water) = self.grid.get_tile_mut(water)
+                        {
+                            water.tile.state.despawn();
                             let soil = self.grid.get_tile_mut(pos).unwrap();
                             if let TileKind::Soil(state) = &mut soil.tile.kind {
+                                // TODO: animation
                                 *state = SoilState::Watered;
                             }
                         }
@@ -114,11 +132,15 @@ impl Model {
                         let poop = self
                             .grid
                             .get_neighbors(pos)
-                            .find(|tile| matches!(tile.tile.kind, TileKind::Poop(_)));
-                        if let Some(poop) = poop {
-                            self.grid.remove_tile(poop.pos);
+                            .find(|tile| matches!(tile.tile.kind, TileKind::Poop(_)))
+                            .map(|tile| tile.pos);
+                        if let Some(poop) = poop
+                            && let Some(poop) = self.grid.get_tile_mut(poop)
+                        {
+                            poop.tile.state.despawn();
                             let soil = self.grid.get_tile_mut(pos).unwrap();
                             if let TileKind::Soil(state) = &mut soil.tile.kind {
+                                // TODO: animation
                                 *state = SoilState::Rich;
                             }
                         }
@@ -129,7 +151,7 @@ impl Model {
                     lifetime.remaining -= delta_time;
                     if lifetime.remaining <= Time::ZERO {
                         // Evaporate
-                        self.grid.remove_tile(pos);
+                        tile.tile.state.despawn();
                     }
                 }
                 TileKind::Bug(ref mut bug) => {
@@ -149,6 +171,7 @@ impl Model {
                             vec2(0, delta.y.signum())
                         };
 
+                        // TODO: animation
                         if grid.get_tile(tile.pos + dir).is_none()
                             && let Some(mut tile) = grid.remove_tile(pos)
                             && let TileKind::Bug(bug) = &mut tile.tile.kind
@@ -156,6 +179,14 @@ impl Model {
                             bug.move_timer = self.config.bug_move_time;
                             grid.set_tile(tile.pos + dir, tile.tile);
                         }
+                        // if grid.get_tile(tile.pos + dir).is_none()
+                        //     && let Some(tile) = grid.get_tile_mut(pos)
+                        //     && let TileKind::Bug(bug) = &mut tile.tile.kind
+                        // {
+                        //     bug.move_timer = self.config.bug_move_time;
+                        //     tile.tile.state = TileState::Moving(dir);
+                        //     grid.set_tile(tile.pos + dir, Tile::new(TileKind::GhostBlock));
+                        // }
                     };
 
                     match &mut bug.state {
@@ -271,7 +302,7 @@ impl Model {
                 TileKind::Poop(ref mut lifetime) => {
                     lifetime.remaining -= delta_time;
                     if lifetime.remaining <= Time::ZERO {
-                        self.grid.remove_tile(pos);
+                        tile.tile.state.despawn();
                     }
                 }
                 TileKind::Drainer => {
@@ -292,10 +323,12 @@ impl Model {
                         // Look for a sprinkler
                         let mut sprinklers = Vec::new();
                         get_all_connected(&self.grid, pos, |tile| {
-                            if let TileKind::Sprinkler(_) = tile.tile {
+                            if tile.tile.state.interactive()
+                                && let TileKind::Sprinkler(_) = tile.tile.kind
+                            {
                                 sprinklers.push(tile.pos);
                             }
-                            tile.tile.is_piping()
+                            tile.tile.state.interactive() && tile.tile.kind.is_piping()
                         });
 
                         let empty_tiles: HashSet<vec2<ICoord>> = sprinklers
@@ -309,8 +342,9 @@ impl Model {
                             .collect();
                         if let Some(target) = empty_tiles.into_iter().choose(&mut rng) {
                             // Pipe water to a sprinkler
-                            // TODO: animation
-                            self.grid.remove_tile(water);
+                            if let Some(water) = self.grid.get_tile_mut(water) {
+                                water.tile.state.despawn();
+                            }
                             self.grid.set_tile(
                                 target,
                                 Tile::new(TileKind::Water(Lifetime::new(
@@ -326,10 +360,12 @@ impl Model {
                 TileKind::Cutter(_) => {
                     let mut powered = false;
                     get_all_connected(&self.grid, pos, |tile| {
-                        if let TileKind::Power = tile.tile {
+                        if tile.tile.state.interactive()
+                            && let TileKind::Power = tile.tile.kind
+                        {
                             powered = true;
                         }
-                        tile.tile.transmits_power()
+                        tile.tile.state.interactive() && tile.tile.kind.transmits_power()
                     });
                     if let Some(tile) = self.grid.get_tile_mut(pos)
                         && let TileKind::Cutter(cutter) = &mut tile.tile.kind
@@ -359,10 +395,12 @@ impl Model {
                 TileKind::Pipe(_) | TileKind::Sprinkler(_) => {
                     let mut piped = false;
                     get_all_connected(&self.grid, pos, |tile| {
-                        if let TileKind::Drainer = tile.tile {
+                        if tile.tile.state.interactive()
+                            && let TileKind::Drainer = tile.tile.kind
+                        {
                             piped = true;
                         }
-                        tile.tile.is_piping()
+                        tile.tile.state.interactive() && tile.tile.kind.is_piping()
                     });
                     if let Some(tile) = self.grid.get_tile_mut(pos)
                         && let TileKind::Pipe(connected) | TileKind::Sprinkler(connected) =
@@ -379,7 +417,7 @@ impl Model {
     }
 
     fn cut_plant_tile(&mut self, target: vec2<ICoord>, earn_money: bool) {
-        let Some(tile) = self.grid.get_tile(target) else {
+        let Some(tile) = self.grid.get_tile_mut(target) else {
             return;
         };
         let TileKind::Leaf(leaf) = &tile.tile.kind else {
@@ -389,7 +427,7 @@ impl Model {
         if earn_money {
             self.money += config.price;
         }
-        self.grid.remove_tile(target);
+        tile.tile.state.despawn();
 
         let mut lost_plants = Vec::new();
         for tile in self.grid.get_neighbors(target) {
@@ -402,7 +440,8 @@ impl Model {
                 // Check connectivity to root
                 let mut rooted = false;
                 let group = get_all_connected(&self.grid, tile.pos, |other| {
-                    if let TileKind::Leaf(other) = other.tile
+                    if other.tile.state.interactive()
+                        && let TileKind::Leaf(other) = &other.tile.kind
                         && other.kind == leaf.kind
                     {
                         if other.root {
@@ -420,12 +459,12 @@ impl Model {
         }
 
         for tile in lost_plants {
-            if let Some(tile) = self.grid.remove_tile(tile)
-                && earn_money
-                && let TileKind::Leaf(leaf) = &tile.tile.kind
-            {
-                let config = &self.config.plants[&leaf.kind];
-                self.money += config.price;
+            if let Some(tile) = self.grid.get_tile_mut(tile) {
+                tile.tile.state.despawn();
+                if earn_money && let TileKind::Leaf(leaf) = &tile.tile.kind {
+                    let config = &self.config.plants[&leaf.kind];
+                    self.money += config.price;
+                }
             }
         }
     }
@@ -621,9 +660,11 @@ impl Model {
                             false
                         }
                     });
-                    if let Some((&pos, _)) = bug {
+                    if let Some((&pos, _)) = bug
+                        && let Some(tile) = self.grid.get_tile_mut(pos)
+                    {
                         // Kill bug
-                        self.grid.remove_tile(pos);
+                        tile.tile.state.despawn();
                     }
                 }
             }
@@ -673,14 +714,14 @@ impl Model {
 fn get_all_connected(
     grid: &Grid,
     start: vec2<ICoord>,
-    mut condition: impl FnMut(Positioned<&TileKind>) -> bool,
+    mut condition: impl FnMut(Positioned<&Tile>) -> bool,
 ) -> Vec<vec2<ICoord>> {
     let mut connected = vec![start];
     let mut to_check = vec![start];
 
     while let Some(pos) = to_check.pop() {
         for tile in grid.get_neighbors(pos) {
-            if !connected.contains(&tile.pos) && condition(tile.map(|tile| &tile.kind)) {
+            if !connected.contains(&tile.pos) && condition(tile) {
                 connected.push(tile.pos);
                 to_check.push(tile.pos);
             }

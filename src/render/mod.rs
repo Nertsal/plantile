@@ -137,21 +137,33 @@ impl GameRender {
 
             let color = Color::new(mult, mult, mult, 1.0);
             let mut transform = mat3::identity();
-            if let TileState::Spawning(timer) = &tile.tile.state {
-                // Spawn animation
-                let t = timer.ratio().as_f32();
-                let t = 1.0 - crate::util::ease_out_elastic_with(1.0 - t, 3.0, 1.0);
-                let scale = 1.0 + 0.15 * t;
-                let rotation = -10.0 * t;
-                transform *=
-                    mat3::scale_uniform(scale) * mat3::rotate(Angle::from_degrees(rotation));
-            } else if let Some((_, t)) = self.hover_animation.iter().find(|(p, _)| *p == pos) {
-                // Hover animation
-                let t = t.as_f32();
-                let t = 1.0 - crate::util::ease_out_elastic_with(t, 3.0, 1.0);
-                let stretch = 1.0 + 0.3 * t;
-                let squish = 1.0 - 0.3 * t;
-                transform *= mat3::scale(vec2(squish, stretch));
+            match &tile.tile.state {
+                TileState::Spawning(timer) => {
+                    let t = timer.ratio().as_f32();
+                    let t = 1.0 - crate::util::ease_out_elastic_with(1.0 - t, 3.0, 1.0);
+                    let scale = 1.0 + 0.15 * t;
+                    let rotation = -10.0 * t;
+                    transform *=
+                        mat3::scale_uniform(scale) * mat3::rotate(Angle::from_degrees(rotation));
+                }
+                TileState::Despawning(timer) => {
+                    let t = timer.ratio().as_f32();
+                    let t = 1.0 - crate::util::ease_out_elastic_with(1.0 - t, 3.0, 1.0);
+                    let scale = 0.9 * t;
+                    let rotation = 5.0 + 5.0 * t;
+                    transform *=
+                        mat3::scale_uniform(scale) * mat3::rotate(Angle::from_degrees(rotation));
+                }
+                TileState::Idle => {
+                    if let Some((_, t)) = self.hover_animation.iter().find(|(p, _)| *p == pos) {
+                        // Hover animation
+                        let t = t.as_f32();
+                        let t = 1.0 - crate::util::ease_out_elastic_with(t, 3.0, 1.0);
+                        let stretch = 1.0 + 0.3 * t;
+                        let squish = 1.0 - 0.3 * t;
+                        transform *= mat3::scale(vec2(squish, stretch));
+                    }
+                }
             }
             self.util.draw_on_tile_with(
                 &model.grid_visual,
@@ -163,7 +175,9 @@ impl GameRender {
                 framebuffer,
             );
 
-            if let Some(t) = tile.tile.kind.action_progress() {
+            if tile.tile.state.interactive()
+                && let Some(t) = tile.tile.kind.action_progress()
+            {
                 // Tile action progress
                 let t = t.as_f32();
                 let pos = Aabb2::point(
@@ -197,6 +211,9 @@ impl GameRender {
             connections.insert((a, b), color);
         };
         for tile in model.grid.all_tiles() {
+            if !tile.tile.state.interactive() {
+                continue;
+            }
             match &tile.tile.kind {
                 TileKind::Leaf(leaf) => {
                     for connected_to in leaf.connections.get_connections(tile.pos) {

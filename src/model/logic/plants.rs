@@ -74,7 +74,8 @@ impl Model {
         // Grow
         let_leaf!(let plant, leaf);
         if get_all_connected(&self.grid, plant.pos, |tile| {
-            if let TileKind::Leaf(other) = tile.tile
+            if tile.tile.state.interactive()
+                && let TileKind::Leaf(other) = &tile.tile.kind
                 && leaf.kind == other.kind
             {
                 true

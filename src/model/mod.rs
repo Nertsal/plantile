@@ -273,6 +273,19 @@ impl Tile {
 pub enum TileState {
     Spawning(Lifetime),
     Idle,
+    Despawning(Lifetime),
+}
+
+impl TileState {
+    pub fn interactive(&self) -> bool {
+        matches!(self, TileState::Idle)
+    }
+
+    pub fn despawn(&mut self) {
+        if !matches!(self, Self::Despawning(_)) {
+            *self = Self::Despawning(Lifetime::new(Time::ONE));
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

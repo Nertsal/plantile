@@ -73,7 +73,7 @@ impl Model {
         };
 
         let plant_positions = get_all_connected(&self.grid, target, |tile| {
-            if let TileKind::Leaf(other) = tile.tile
+            if let TileKind::Leaf(other) = &tile.tile.kind
                 && leaf.kind == other.kind
             {
                 true
@@ -88,14 +88,16 @@ impl Model {
 
         // Remove stem and leaves
         for pos in plant_positions {
-            if let Some(mut tile) = self.grid.remove_tile(pos)
-                && let TileKind::Leaf(leaf) = &mut tile.tile.kind
-                && leaf.root
-            {
-                // Replace root with a new seed
-                // TODO: actually this is outdated behavior
-                self.grid
-                    .set_tile(pos, Tile::new(TileKind::Seed(leaf.kind)));
+            if let Some(tile) = self.grid.get_tile_mut(pos) {
+                tile.tile.state.despawn();
+                if let TileKind::Leaf(leaf) = &tile.tile.kind
+                    && leaf.root
+                {
+                    // Replace root with a new seed
+                    // TODO: actually this is outdated behavior
+                    let kind = leaf.kind;
+                    self.grid.set_tile(pos, Tile::new(TileKind::Seed(kind)));
+                }
             }
         }
 
@@ -110,21 +112,22 @@ impl Model {
             return;
         }
 
-        let Some(tile) = self.grid.get_tile(target) else {
+        let Some(tile) = self.grid.get_tile_mut(target) else {
             return;
         };
         log::debug!("collect {}: {:?}", target, tile.tile);
 
         if tile.tile.kind.is_collectable() {
-            let mut tile = self.grid.remove_tile(target).unwrap();
-            match &mut tile.tile.kind {
+            tile.tile.state.despawn();
+            let mut kind = tile.tile.kind.clone();
+            match &mut kind {
                 TileKind::Water(lifetime) | TileKind::Poop(lifetime) => {
                     *lifetime = Lifetime::new(self.config.water_lifetime);
                 }
                 TileKind::Light(powered) | TileKind::Wire(powered) => *powered = false,
                 _ => {}
             }
-            self.inventory_add(tile.tile.kind, 1);
+            self.inventory_add(kind, 1);
             self.context.sfx.play(&self.context.assets.sounds.rock);
         }
     }

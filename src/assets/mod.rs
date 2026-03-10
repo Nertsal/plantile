@@ -45,6 +45,7 @@ pub struct Config {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ConfigAnimations {
     pub tile_spawn: Time,
+    pub tile_despawn: Time,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
