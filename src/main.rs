@@ -23,7 +23,7 @@ struct Opts {
 }
 
 fn main() {
-    log::info!("Hello, gamers!");
+    log::info!("The plants must grow...");
 
     let opts: Opts = clap::Parser::parse();
 
@@ -52,7 +52,7 @@ fn main() {
 
     let mut options = geng::ContextOptions::default();
     options.with_cli(&opts.geng);
-    options.window.title = "Plant 2(d)".into();
+    options.window.title = "Plantile".into();
 
     Geng::run_with(&options, |geng| async move {
         let main = geng_main(geng, opts);
@@ -70,7 +70,7 @@ fn main() {
         }
     });
 
-    log::info!("Please come back...");
+    log::info!("Goodbye!");
 }
 
 async fn geng_main(geng: Geng, _opts: Opts) -> Result<()> {
