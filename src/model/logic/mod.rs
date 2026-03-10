@@ -78,11 +78,30 @@ impl Model {
                             .get_neighbors(pos)
                             .find(|tile| matches!(tile.tile.kind, TileKind::Water(_)))
                             .map(|tile| tile.pos);
-                        if let Some(water) = water {
+                        if let Some(water) = water
+                            && !self.grid.get_neighbors(pos).any(|tile| {
+                                if let TileKind::Leaf(leaf) = &tile.tile.kind {
+                                    leaf.kind == plant_kind
+                                } else {
+                                    false
+                                }
+                            })
+                            && let Some(empty) = self
+                                .grid
+                                .get_neighbors_all(pos)
+                                .filter(|tile| tile.tile.is_none())
+                                .map(|tile| tile.pos)
+                                .choose(&mut rng)
+                        {
                             // Grow into a plant
+                            if let Some(seed) = self.grid.get_tile_mut(pos) {
+                                seed.tile.state.transform();
+                            }
                             self.grid.set_tile(
-                                pos,
-                                Tile::new(TileKind::Leaf(Leaf::new(plant_kind).root())),
+                                empty,
+                                Tile::new(TileKind::Leaf(
+                                    Leaf::new(plant_kind).connected(pos - empty),
+                                )),
                             );
                             if let Some(water) = self.grid.get_tile_mut(water) {
                                 water.tile.state.despawn();
@@ -109,6 +128,19 @@ impl Model {
                             PlantKind::TypeD => state >= SoilState::Rich,
                         });
                     if let Some((soil_pos, _soil_state)) = soil
+                        && !self.grid.get_neighbors(pos).any(|tile| {
+                            if let TileKind::Leaf(leaf) = &tile.tile.kind {
+                                leaf.kind == plant_kind
+                            } else {
+                                false
+                            }
+                        })
+                        && let Some(empty) = self
+                            .grid
+                            .get_neighbors_all(pos)
+                            .filter(|tile| tile.tile.is_none())
+                            .map(|tile| tile.pos)
+                            .choose(&mut rng)
                         && let Some(soil) = self.grid.get_tile_mut(soil_pos)
                         && let TileKind::Soil(soil_state) = &mut soil.tile.kind
                     {
@@ -116,8 +148,14 @@ impl Model {
                         // TODO: gradual usage of water from soil
                         *soil_state = SoilState::Dry;
                         soil.tile.state.transform();
-                        self.grid
-                            .set_tile(pos, Tile::new(TileKind::Leaf(Leaf::new(plant_kind).root())));
+
+                        if let Some(seed) = self.grid.get_tile_mut(pos) {
+                            seed.tile.state.transform();
+                        }
+                        self.grid.set_tile(
+                            empty,
+                            Tile::new(TileKind::Leaf(Leaf::new(plant_kind).connected(pos - empty))),
+                        );
                     }
                 }
                 TileKind::Soil(state) => match state {
@@ -208,8 +246,7 @@ impl Model {
                                 .all_tiles()
                                 .filter(|tile| {
                                     if manhattan_distance(pos, tile.pos) <= 7
-                                        && let TileKind::Leaf(leaf) = &tile.tile.kind
-                                        && !leaf.root
+                                        && let TileKind::Leaf(_) = &tile.tile.kind
                                     {
                                         true
                                     } else {
@@ -438,19 +475,19 @@ impl Model {
             if lost_plants.contains(&tile.pos) {
                 continue;
             }
-            if let TileKind::Leaf(leaf) = &tile.tile.kind
-                && !leaf.root
-            {
+            if let TileKind::Leaf(leaf) = &tile.tile.kind {
                 // Check connectivity to root
                 let mut rooted = false;
                 let group = get_all_connected(&self.grid, tile.pos, |other| {
+                    if let TileKind::Seed(plant_kind) = other.tile.kind
+                        && plant_kind == leaf.kind
+                    {
+                        rooted = true;
+                    }
                     if target != other.pos
                         && let TileKind::Leaf(other) = &other.tile.kind
                         && other.kind == leaf.kind
                     {
-                        if other.root {
-                            rooted = true;
-                        }
                         true
                     } else {
                         false

@@ -150,7 +150,6 @@ impl<T> Connections<T> {
 pub struct Leaf {
     /// Time until the plant attempts to grow.
     pub growth_timer: Option<Time>,
-    pub root: bool,
     pub kind: PlantKind,
     pub connections: Connections,
 }
@@ -159,14 +158,9 @@ impl Leaf {
     pub fn new(kind: PlantKind) -> Self {
         Self {
             growth_timer: Some(R32::ONE),
-            root: false,
             kind,
             connections: Connections::new(),
         }
-    }
-
-    pub fn root(self) -> Self {
-        Self { root: true, ..self }
     }
 
     pub fn connected(mut self, side: vec2<ICoord>) -> Self {
@@ -179,15 +173,6 @@ impl Leaf {
 pub struct Positioned<T> {
     pub pos: vec2<ICoord>,
     pub tile: T,
-}
-
-impl<T> Positioned<T> {
-    pub fn map<U>(self, mut f: impl FnMut(T) -> U) -> Positioned<U> {
-        Positioned {
-            pos: self.pos,
-            tile: f(self.tile),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]

@@ -32,7 +32,7 @@ impl Model {
             if connections.get(delta).is_some()
                 && self.grid.get_tile(position + delta).is_none_or(|tile| {
                     matches!(tile.tile.state, TileState::Despawning(_))
-                        || !matches!(tile.tile.kind, TileKind::Leaf(_))
+                        || !matches!(tile.tile.kind, TileKind::Leaf(_) | TileKind::Seed(_))
                 })
             {
                 // Connection dropped
@@ -47,8 +47,7 @@ impl Model {
         // Update growth timer
         let_leaf!(let mut plant, leaf);
         leaf.connections = connections;
-        if leaf.growth_timer.is_none() && (connect_count == 0 || (!leaf.root && connect_count <= 1))
-        {
+        if leaf.growth_timer.is_none() && connect_count <= 1 {
             leaf.growth_timer = Some(R32::ONE);
         }
 
