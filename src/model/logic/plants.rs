@@ -46,6 +46,7 @@ impl Model {
 
         // Update growth timer
         let_leaf!(let mut plant, leaf);
+        leaf.connections = connections;
         if leaf.growth_timer.is_none() && (connect_count == 0 || (!leaf.root && connect_count <= 1))
         {
             leaf.growth_timer = Some(R32::ONE);
