@@ -10,7 +10,9 @@ impl Model {
         };
 
         self.drone.target = match &tile.tile.kind {
-            TileKind::Leaf(_) => DroneTarget::Interact(target, DroneAction::CutPlant),
+            TileKind::Leaf(_) | TileKind::Seed(_) => {
+                DroneTarget::Interact(target, DroneAction::CutPlant)
+            }
             TileKind::Bug(bug) => DroneTarget::KillBug(bug.id),
             _ if tile.tile.kind.is_collectable() => {
                 if self.inventory.len() >= INVENTORY_MAX_SIZE {

@@ -457,30 +457,40 @@ impl Model {
         self.rng_spawn(delta_time);
     }
 
+    /// Cut plant from seed or leaf.
     fn cut_plant_tile(&mut self, target: vec2<ICoord>, earn_money: bool) {
         let Some(tile) = self.grid.get_tile_mut(target) else {
             return;
         };
-        let TileKind::Leaf(leaf) = &tile.tile.kind else {
-            return;
+        let (plant_kind, leaf_connections) = match &tile.tile.kind {
+            TileKind::Leaf(leaf) => (leaf.kind, Some(leaf.connections.clone())),
+            TileKind::Seed(kind) => (*kind, None),
+            _ => return,
         };
-        let config = &self.config.plants[&leaf.kind];
-        if earn_money {
-            self.money += config.price;
-        }
+        let config = &self.config.plants[&plant_kind];
         tile.tile.state.despawn();
+        if leaf_connections.is_some() {
+            if earn_money {
+                self.money += config.price;
+            }
+        } else {
+            self.inventory_add(TileKind::Seed(plant_kind), 1);
+        }
 
         let mut lost_plants = Vec::new();
         for tile in self.grid.get_neighbors(target) {
             if lost_plants.contains(&tile.pos) {
                 continue;
             }
-            if let TileKind::Leaf(leaf) = &tile.tile.kind {
+            if let TileKind::Leaf(leaf) = &tile.tile.kind
+                && leaf.kind == plant_kind
+            {
                 // Check connectivity to root
                 let mut rooted = false;
                 let group = get_all_connected(&self.grid, tile.pos, |other| {
-                    if let TileKind::Seed(plant_kind) = other.tile.kind
-                        && plant_kind == leaf.kind
+                    if other.tile.state.interactive()
+                        && let TileKind::Seed(kind) = other.tile.kind
+                        && kind == plant_kind
                     {
                         rooted = true;
                     }
