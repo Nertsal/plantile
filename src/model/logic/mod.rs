@@ -131,9 +131,9 @@ impl Model {
                             vec2(0, delta.y.signum())
                         };
 
-                        if let Some(mut tile) = grid.remove_tile(pos)
+                        if grid.get_tile(tile.pos + dir).is_none()
+                            && let Some(mut tile) = grid.remove_tile(pos)
                             && let Tile::Bug(bug) = &mut tile.tile
-                            && grid.get_tile(tile.pos + dir).is_none()
                         {
                             bug.move_timer = self.config.bug_move_time;
                             grid.set_tile(tile.pos + dir, tile.tile);
