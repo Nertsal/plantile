@@ -21,7 +21,7 @@ pub fn ease_out_elastic_with<T: Float>(t: T, frequency: T, damping: T) -> T {
         T::ONE
     } else {
         T::from_f32(
-            (-10.0 * t * damp).exp2() * ((t - freq / 4.0) * std::f32::consts::TAU / freq).sin()
+            (-10.0 * t).exp2() * ((t - 1.0 / 4.0 / freq) * std::f32::consts::TAU * freq).sin()
                 + 1.0,
         )
     }
