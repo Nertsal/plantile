@@ -21,6 +21,7 @@ build-web *ARGS:
 
 build-itch-bundle:
     just build-web
+    rm -rf ./target/jampack
     mkdir -p ./target/jampack
     cp -r ./dev-assets/jampack.html ./target/jampack/index.html
     cp -r ./target/jam ./target/jampack/left
