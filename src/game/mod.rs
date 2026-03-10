@@ -4,6 +4,9 @@ pub use self::ui::*;
 
 use crate::{model::*, prelude::*, render::*, ui::context::UiContext, util::SecondOrderState};
 
+const ZOOM_MIN: f32 = -5.0;
+const ZOOM_MAX: f32 = 15.0;
+
 pub struct GameState {
     context: Context,
     ui_context: UiContext,
@@ -42,7 +45,7 @@ pub enum InputState {
 
 impl GameState {
     pub fn new(context: Context) -> Self {
-        Self {
+        let mut game = Self {
             render: GameRender::new(context.clone()),
             model: Model::new(context.clone(), context.assets.config.clone()),
             ui: GameUI::new(&context),
@@ -54,14 +57,16 @@ impl GameState {
             },
             input_state: InputState::Idle,
             camera_drag: None,
-            zoom: SecondOrderState::new(3.0, 1.0, 0.0, 0.0),
+            zoom: SecondOrderState::new(3.0, 1.0, 0.0, ZOOM_MAX),
 
             ui_context: UiContext::new(context.clone()),
             framebuffer_size: vec2(1, 1),
             delta_time: Time::new(0.1),
             real_time: Time::ZERO,
             context,
-        }
+        };
+        game.zoom.target = 0.001; // For better pixels (slight misaligned)
+        game
     }
 
     fn left_click(&mut self) {
@@ -100,7 +105,7 @@ impl geng::State for GameState {
             if scroll.abs() > 0.01 {
                 let sensitivity = 90.0;
                 self.zoom.target -= scroll.signum() * sensitivity * delta_time as f32;
-                self.zoom.target = self.zoom.target.clamp(-5.0, 25.0);
+                self.zoom.target = self.zoom.target.clamp(ZOOM_MIN, ZOOM_MAX);
             }
             self.zoom.update(delta_time as f32);
             self.model.camera.fov = Camera2dFov::MinSide(15.0 + self.zoom.current);
