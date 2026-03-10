@@ -11,15 +11,15 @@ impl Model {
                 let Some($plant) = self.grid.get_tile(position) else {
                     return;
                 };
-                let Tile::Leaf($leaf) = &$plant.tile else {
+                let TileKind::Leaf($leaf) = &$plant.tile.kind else {
                     return;
                 };
             };
             (let mut $plant:ident, $leaf:ident) => {
-                let Some(mut $plant) = self.grid.get_tile_mut(position) else {
+                let Some($plant) = self.grid.get_tile_mut(position) else {
                     return;
                 };
-                let Tile::Leaf($leaf) = &mut $plant.tile else {
+                let TileKind::Leaf($leaf) = &mut $plant.tile.kind else {
                     return;
                 };
             };
@@ -33,7 +33,7 @@ impl Model {
                 && self
                     .grid
                     .get_tile(position + delta)
-                    .is_none_or(|tile| !matches!(tile.tile, Tile::Leaf(_)))
+                    .is_none_or(|tile| !matches!(tile.tile.kind, TileKind::Leaf(_)))
             {
                 // Connection dropped
                 connections.set(delta, None);
@@ -74,7 +74,7 @@ impl Model {
         // Grow
         let_leaf!(let plant, leaf);
         if get_all_connected(&self.grid, plant.pos, |tile| {
-            if let Tile::Leaf(other) = tile.tile
+            if let TileKind::Leaf(other) = tile.tile
                 && leaf.kind == other.kind
             {
                 true
@@ -93,7 +93,7 @@ impl Model {
         let lights: Vec<vec2<ICoord>> = self
             .grid
             .all_tiles()
-            .filter(|tile| matches!(tile.tile, Tile::Light(true)))
+            .filter(|tile| matches!(tile.tile.kind, TileKind::Light(true)))
             .map(|tile| tile.pos)
             .collect();
 
@@ -147,13 +147,15 @@ impl Model {
         if let Some(grow) = grow_left {
             let mut leaf = Leaf::new(kind);
             leaf.connections.set(position - grow, Some(()));
-            self.grid.set_tile(grow, Tile::Leaf(leaf));
+            // TODO: animation
+            self.grid.set_tile(grow, Tile::new(TileKind::Leaf(leaf)));
             self.context.sfx.play(&self.context.assets.sounds.grow);
         }
         if let Some(grow) = grow_right {
             let mut leaf = Leaf::new(kind);
             leaf.connections.set(position - grow, Some(()));
-            self.grid.set_tile(grow, Tile::Leaf(leaf));
+            // TODO: animation
+            self.grid.set_tile(grow, Tile::new(TileKind::Leaf(leaf)));
         }
 
         // Connect
@@ -169,7 +171,7 @@ impl Model {
 
 pub fn can_grow_into(pos: vec2<ICoord>, grid: &Grid) -> bool {
     match grid.get_tile(pos) {
-        Some(tile) => matches!(tile.tile, Tile::Wire(_) | Tile::Pipe(_)),
+        Some(tile) => matches!(tile.tile.kind, TileKind::Wire(_) | TileKind::Pipe(_)),
         None => true,
     }
 }
@@ -183,7 +185,7 @@ fn density_around(grid: &Grid, pos: vec2<ICoord>) -> f32 {
                 grid.get_tile(pos)
             })
         })
-        .filter(|tile| matches!(tile.tile, Tile::Leaf(_)))
+        .filter(|tile| matches!(tile.tile.kind, TileKind::Leaf(_)))
         .count();
     let area = ((range * 2 + 1) as f32).sqr();
     leaves as f32 / area

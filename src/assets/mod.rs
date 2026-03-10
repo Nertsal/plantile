@@ -52,11 +52,11 @@ pub struct ConfigPlant {
 pub struct ConfigShopItem {
     pub price: Money,
     pub unlocked_at: Money,
-    pub tile: Tile,
+    pub tile: TileKind,
 }
 
 impl Config {
-    pub fn get_cost(&self, tile: &Tile) -> Money {
+    pub fn get_cost(&self, tile: &TileKind) -> Money {
         self.shop
             .iter()
             .find(|item| item.tile == *tile)
@@ -165,36 +165,36 @@ pub struct SpritesTiles {
 }
 
 impl SpritesTiles {
-    pub fn get_texture(&self, tile: &Tile) -> &PixelTexture {
+    pub fn get_texture(&self, tile: &TileKind) -> &PixelTexture {
         match tile {
-            Tile::Leaf(leaf) => match leaf.kind {
+            TileKind::Leaf(leaf) => match leaf.kind {
                 PlantKind::TypeA => &self.plant_a,
                 PlantKind::TypeB => &self.plant_b,
                 PlantKind::TypeC => &self.plant_c,
                 PlantKind::TypeD => &self.plant_d,
             },
-            Tile::Seed(kind) => match kind {
+            TileKind::Seed(kind) => match kind {
                 PlantKind::TypeA => &self.seed_a,
                 PlantKind::TypeB => &self.seed_b,
                 PlantKind::TypeC => &self.seed_c,
                 PlantKind::TypeD => &self.seed_d,
             },
-            Tile::Light(_) => &self.light,
-            Tile::Soil(state) => match state {
+            TileKind::Light(_) => &self.light,
+            TileKind::Soil(state) => match state {
                 SoilState::Dry => &self.soil_dry,
                 SoilState::Watered => &self.soil,
                 SoilState::Rich => &self.soil_rich,
             },
-            Tile::Water(_) => &self.water,
-            Tile::Bug(_) => &self.bug,
-            Tile::Poop(_) => &self.poop,
-            Tile::Power => &self.power,
-            Tile::Wire(_) => &self.wire,
-            Tile::Drainer => &self.drain,
-            Tile::Cutter(_) => &self.cutter,
-            Tile::Pipe(_) => &self.pipe,
-            Tile::Sprinkler(_) => &self.sprinkler,
-            Tile::Rock => &self.rock,
+            TileKind::Water(_) => &self.water,
+            TileKind::Bug(_) => &self.bug,
+            TileKind::Poop(_) => &self.poop,
+            TileKind::Power => &self.power,
+            TileKind::Wire(_) => &self.wire,
+            TileKind::Drainer => &self.drain,
+            TileKind::Cutter(_) => &self.cutter,
+            TileKind::Pipe(_) => &self.pipe,
+            TileKind::Sprinkler(_) => &self.sprinkler,
+            TileKind::Rock => &self.rock,
         }
     }
 }

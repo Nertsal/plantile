@@ -14,7 +14,7 @@ pub struct GameUI {
 
     pub shop: WidgetState,
     pub shop_hover_t: f32,
-    pub shop_items: Vec<(WidgetState, Tile)>,
+    pub shop_items: Vec<(WidgetState, TileKind)>,
 
     pub gold: WidgetState,
 }

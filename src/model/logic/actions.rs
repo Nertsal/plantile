@@ -9,10 +9,10 @@ impl Model {
             return;
         };
 
-        self.drone.target = match &tile.tile {
-            Tile::Leaf(_) => DroneTarget::Interact(target, DroneAction::CutPlant),
-            Tile::Bug(bug) => DroneTarget::KillBug(bug.id),
-            _ if tile.tile.is_collectable() => {
+        self.drone.target = match &tile.tile.kind {
+            TileKind::Leaf(_) => DroneTarget::Interact(target, DroneAction::CutPlant),
+            TileKind::Bug(bug) => DroneTarget::KillBug(bug.id),
+            _ if tile.tile.kind.is_collectable() => {
                 if self.inventory.len() >= INVENTORY_MAX_SIZE {
                     // Inventory already maxed
                     // self.context
@@ -30,7 +30,7 @@ impl Model {
             .play(&self.context.assets.sounds.drone_confirm);
     }
 
-    pub fn place_tile(&mut self, target: vec2<ICoord>, tile: Tile) -> bool {
+    pub fn place_tile(&mut self, target: vec2<ICoord>, tile: TileKind) -> bool {
         log::debug!("place tile at {}: {:?}", target, tile);
         if self.grid.get_tile(target).is_some() || !self.inventory.iter().any(|(t, _)| *t == tile) {
             return false;
@@ -44,7 +44,7 @@ impl Model {
         true
     }
 
-    pub fn buy_tile(&mut self, target: vec2<ICoord>, tile: Tile) -> bool {
+    pub fn buy_tile(&mut self, target: vec2<ICoord>, tile: TileKind) -> bool {
         log::debug!("buy tile at {}: {:?}", target, tile);
         if self.grid.get_tile(target).is_some() {
             return false;
@@ -68,12 +68,12 @@ impl Model {
         let Some(tile) = self.grid.get_tile(target) else {
             return false;
         };
-        let Tile::Leaf(leaf) = tile.tile else {
+        let TileKind::Leaf(leaf) = &tile.tile.kind else {
             return false;
         };
 
         let plant_positions = get_all_connected(&self.grid, target, |tile| {
-            if let Tile::Leaf(other) = tile.tile
+            if let TileKind::Leaf(other) = tile.tile
                 && leaf.kind == other.kind
             {
                 true
@@ -89,11 +89,13 @@ impl Model {
         // Remove stem and leaves
         for pos in plant_positions {
             if let Some(mut tile) = self.grid.remove_tile(pos)
-                && let Tile::Leaf(leaf) = &mut tile.tile
+                && let TileKind::Leaf(leaf) = &mut tile.tile.kind
                 && leaf.root
             {
                 // Replace root with a new seed
-                self.grid.set_tile(pos, Tile::Seed(leaf.kind));
+                // TODO: actually this is outdated behavior
+                self.grid
+                    .set_tile(pos, Tile::new(TileKind::Seed(leaf.kind)));
             }
         }
 
@@ -113,21 +115,21 @@ impl Model {
         };
         log::debug!("collect {}: {:?}", target, tile.tile);
 
-        if tile.tile.is_collectable() {
+        if tile.tile.kind.is_collectable() {
             let mut tile = self.grid.remove_tile(target).unwrap();
-            match &mut tile.tile {
-                Tile::Water(lifetime) | Tile::Poop(lifetime) => {
+            match &mut tile.tile.kind {
+                TileKind::Water(lifetime) | TileKind::Poop(lifetime) => {
                     *lifetime = Lifetime::new(self.config.water_lifetime);
                 }
-                Tile::Light(powered) | Tile::Wire(powered) => *powered = false,
+                TileKind::Light(powered) | TileKind::Wire(powered) => *powered = false,
                 _ => {}
             }
-            self.inventory_add(tile.tile, 1);
+            self.inventory_add(tile.tile.kind, 1);
             self.context.sfx.play(&self.context.assets.sounds.rock);
         }
     }
 
-    pub fn inventory_add(&mut self, tile: Tile, count: usize) {
+    pub fn inventory_add(&mut self, tile: TileKind, count: usize) {
         match self.inventory.iter_mut().find(|(t, _)| *t == tile) {
             Some((_, available)) => *available += count,
             None => self.inventory.push((tile, count)),

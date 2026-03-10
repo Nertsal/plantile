@@ -76,11 +76,11 @@ impl GameRender {
             .grid
             .get_tile(self.active_highlight.0)
             .and_then(|tile| {
-                let range = match tile.tile {
-                    Tile::Light(_) => Some(assets.config.light_radius),
-                    Tile::Drainer => Some(assets.config.drainer_radius),
-                    Tile::Cutter(_) => Some(assets.config.cutter_radius),
-                    Tile::Sprinkler(_) => Some(1),
+                let range = match tile.tile.kind {
+                    TileKind::Light(_) => Some(assets.config.light_radius),
+                    TileKind::Drainer => Some(assets.config.drainer_radius),
+                    TileKind::Cutter(_) => Some(assets.config.cutter_radius),
+                    TileKind::Sprinkler(_) => Some(1),
                     _ => None,
                 };
                 range.map(|range| (self.active_highlight.0, range))
@@ -117,15 +117,15 @@ impl GameRender {
             let Some(tile) = model.grid.get_tile(pos) else {
                 continue;
             };
-            let texture = sprites.tiles.get_texture(tile.tile);
-            let mult = match *tile.tile {
-                Tile::Light(connected)
-                | Tile::Wire(connected)
-                | Tile::Cutter(Cutter {
+            let texture = sprites.tiles.get_texture(&tile.tile.kind);
+            let mult = match tile.tile.kind {
+                TileKind::Light(connected)
+                | TileKind::Wire(connected)
+                | TileKind::Cutter(Cutter {
                     powered: connected, ..
                 })
-                | Tile::Pipe(connected)
-                | Tile::Sprinkler(connected) => {
+                | TileKind::Pipe(connected)
+                | TileKind::Sprinkler(connected) => {
                     if connected {
                         1.0
                     } else {
@@ -154,7 +154,7 @@ impl GameRender {
                 framebuffer,
             );
 
-            if let Some(t) = tile.tile.action_progress() {
+            if let Some(t) = tile.tile.kind.action_progress() {
                 // Tile action progress
                 let t = t.as_f32();
                 let pos = Aabb2::point(
@@ -188,15 +188,15 @@ impl GameRender {
             connections.insert((a, b), color);
         };
         for tile in model.grid.all_tiles() {
-            match tile.tile {
-                Tile::Leaf(leaf) => {
+            match &tile.tile.kind {
+                TileKind::Leaf(leaf) => {
                     for connected_to in leaf.connections.get_connections(tile.pos) {
                         add_connection(tile.pos, connected_to.pos, palette.connection_plant);
                     }
                 }
-                _ if tile.tile.transmits_power() => {
+                _ if tile.tile.kind.transmits_power() => {
                     for neighbor in model.grid.get_neighbors(tile.pos) {
-                        if neighbor.tile.transmits_power() {
+                        if neighbor.tile.kind.transmits_power() {
                             add_connection(tile.pos, neighbor.pos, palette.connection_power);
                         }
                     }
@@ -237,7 +237,7 @@ impl GameRender {
                 framebuffer,
             );
             if let Some(tile) = model.grid.get_tile(pos) {
-                let name = tile.tile.name().to_uppercase();
+                let name = tile.tile.kind.name().to_uppercase();
                 let tile_bounds = model.grid_visual.tile_bounds(pos).as_f32();
                 let select_size = sprites.tile_select.size().as_f32() / TILE_SIZE_PIXELS.as_f32();
                 let select_bounds = tile_bounds.align_aabb(select_size, vec2(0.5, 0.5));
@@ -255,7 +255,7 @@ impl GameRender {
             }
         };
         let ghost_tile =
-            |pos: vec2<ICoord>, tile: &Tile, framebuffer: &mut ugli::Framebuffer<'_>| {
+            |pos: vec2<ICoord>, tile: &TileKind, framebuffer: &mut ugli::Framebuffer<'_>| {
                 if model.grid.get_tile(pos).is_none() {
                     let texture = sprites.tiles.get_texture(tile);
                     self.util.draw_on_tile(
@@ -273,7 +273,7 @@ impl GameRender {
             let Some(tile) = model.grid.get_tile(pos) else {
                 return;
             };
-            let text = tile.tile.description();
+            let text = tile.tile.kind.description();
             if text.is_empty() {
                 return;
             }
@@ -327,7 +327,7 @@ impl GameRender {
             }
             DroneTarget::KillBug(bug_id) => {
                 let bug = model.grid.tiles.iter().find(|(_, tile)| {
-                    if let Tile::Bug(bug) = tile
+                    if let TileKind::Bug(bug) = &tile.kind
                         && bug.id == bug_id
                     {
                         true
@@ -346,7 +346,7 @@ impl GameRender {
             match input_state {
                 InputState::Idle => {
                     let color = if let Some(tile) = model.grid.get_tile(target)
-                        && let Tile::Bug(_) = tile.tile
+                        && let TileKind::Bug(_) = tile.tile.kind
                     {
                         Color::new(0.7, 0.1, 0.1, 0.5)
                     } else {

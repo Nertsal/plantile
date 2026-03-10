@@ -16,22 +16,22 @@ pub struct Model {
     /// Data used to convert between grid and world coordinates.
     pub grid_visual: GridVisual,
     pub config: Config,
-    pub unlocked_shop: Vec<Tile>,
+    pub unlocked_shop: Vec<TileKind>,
 
     pub next_id: Id,
     /// Actual logic data.
     pub grid: Grid,
     pub money: Money,
     pub drone: Drone,
-    pub inventory: Vec<(Tile, usize)>,
+    pub inventory: Vec<(TileKind, usize)>,
 }
 
 #[derive(Debug, Clone)]
 pub enum DroneTarget {
     MoveTo(vec2<ICoord>),
     Interact(vec2<ICoord>, DroneAction),
-    PlaceTile(vec2<ICoord>, Tile),
-    BuyTile(vec2<ICoord>, Tile),
+    PlaceTile(vec2<ICoord>, TileKind),
+    BuyTile(vec2<ICoord>, TileKind),
     KillBug(Id),
 }
 
@@ -181,6 +181,15 @@ pub struct Positioned<T> {
     pub tile: T,
 }
 
+impl<T> Positioned<T> {
+    pub fn map<U>(self, mut f: impl FnMut(T) -> U) -> Positioned<U> {
+        Positioned {
+            pos: self.pos,
+            tile: f(self.tile),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SoilState {
     Dry,
@@ -246,7 +255,28 @@ impl Lifetime {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub enum Tile {
+pub struct Tile {
+    pub state: TileState,
+    pub kind: TileKind,
+}
+
+impl Tile {
+    pub fn new(kind: TileKind) -> Self {
+        Self {
+            state: TileState::Idle,
+            kind,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum TileState {
+    // Spawning(Lifetime),
+    Idle,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum TileKind {
     Seed(PlantKind),
     Leaf(Leaf),
     Light(bool),
@@ -263,78 +293,78 @@ pub enum Tile {
     Rock,
 }
 
-impl Tile {
+impl TileKind {
     pub fn name(&self) -> &'static str {
         match self {
-            Tile::Seed(kind) => match kind {
+            TileKind::Seed(kind) => match kind {
                 PlantKind::TypeA => "Seed (A)",
                 PlantKind::TypeB => "Seed (B)",
                 PlantKind::TypeC => "Seed (C)",
                 PlantKind::TypeD => "Seed (D)",
             },
-            Tile::Leaf(leaf) => match leaf.kind {
+            TileKind::Leaf(leaf) => match leaf.kind {
                 PlantKind::TypeA => "Leaf (A)",
                 PlantKind::TypeB => "Leaf (B)",
                 PlantKind::TypeC => "Leaf (C)",
                 PlantKind::TypeD => "Leaf (D)",
             },
-            Tile::Light(_) => "Light",
-            Tile::Soil(state) => match state {
+            TileKind::Light(_) => "Light",
+            TileKind::Soil(state) => match state {
                 SoilState::Dry => "Dry Soil",
                 SoilState::Watered => "Soil",
                 SoilState::Rich => "Rich Soil",
             },
-            Tile::Water(_) => "Water",
-            Tile::Bug(_) => "Bug",
-            Tile::Poop(_) => "Poop",
-            Tile::Power => "Power",
-            Tile::Wire(_) => "Wire",
-            Tile::Drainer => "Drainer",
-            Tile::Cutter(_) => "Cutter",
-            Tile::Pipe(_) => "Pipe",
-            Tile::Sprinkler(_) => "Sprinkler",
-            Tile::Rock => "Rock",
+            TileKind::Water(_) => "Water",
+            TileKind::Bug(_) => "Bug",
+            TileKind::Poop(_) => "Poop",
+            TileKind::Power => "Power",
+            TileKind::Wire(_) => "Wire",
+            TileKind::Drainer => "Drainer",
+            TileKind::Cutter(_) => "Cutter",
+            TileKind::Pipe(_) => "Pipe",
+            TileKind::Sprinkler(_) => "Sprinkler",
+            TileKind::Rock => "Rock",
         }
     }
 
     pub fn description(&self) -> &'static str {
         match self {
-            Tile::Seed(kind) => match kind {
+            TileKind::Seed(kind) => match kind {
                 PlantKind::TypeA => "Grows from Dry Soil",
                 PlantKind::TypeB => "Grows from Soil",
                 PlantKind::TypeC => "Grows from Water",
                 PlantKind::TypeD => "Grows from Rich Soil",
             },
-            Tile::Leaf(leaf) => match leaf.kind {
+            TileKind::Leaf(leaf) => match leaf.kind {
                 PlantKind::TypeA => "Sells for 3g",
                 PlantKind::TypeB => "Sells for 10g",
                 PlantKind::TypeC => "Sells for 50g",
                 PlantKind::TypeD => "Sells for 30g",
             },
-            Tile::Light(_) => "Plants grow within range\nrequires Power",
-            Tile::Soil(state) => match state {
+            TileKind::Light(_) => "Plants grow within range\nrequires Power",
+            TileKind::Soil(state) => match state {
                 SoilState::Dry => "",
                 SoilState::Watered => "",
                 SoilState::Rich => "",
             },
-            Tile::Water(_) => "",
-            Tile::Bug(_) => "Eats Plants and produces Poop",
-            Tile::Poop(_) => "Can be used to nourish the soil",
-            Tile::Power => "Provides power to connected tiles",
-            Tile::Wire(_) => "",
-            Tile::Drainer => {
+            TileKind::Water(_) => "",
+            TileKind::Bug(_) => "Eats Plants and produces Poop",
+            TileKind::Poop(_) => "Can be used to nourish the soil",
+            TileKind::Power => "Provides power to connected tiles",
+            TileKind::Wire(_) => "",
+            TileKind::Drainer => {
                 "Collects Water within range to your inventory or to connected Sprinklers"
             }
-            Tile::Cutter(_) => "Automatically cuts adjacent Plants\nrequires Power",
-            Tile::Pipe(_) => "",
-            Tile::Sprinkler(_) => "Ejects water on adjacent tiles",
-            Tile::Rock => "",
+            TileKind::Cutter(_) => "Automatically cuts adjacent Plants\nrequires Power",
+            TileKind::Pipe(_) => "",
+            TileKind::Sprinkler(_) => "Ejects water on adjacent tiles",
+            TileKind::Rock => "",
         }
     }
 
     pub fn update_order(&self) -> i32 {
         match self {
-            Tile::Drainer => 100, // After soil and seed so it takes water first
+            TileKind::Drainer => 100, // After soil and seed so it takes water first
             _ => 0,
         }
     }
@@ -342,38 +372,41 @@ impl Tile {
     pub fn is_collectable(&self) -> bool {
         matches!(
             self,
-            Tile::Seed(_)
-                | Tile::Light(_)
-                | Tile::Soil(_)
-                | Tile::Water(_)
-                | Tile::Poop(_)
-                | Tile::Power
-                | Tile::Wire(_)
-                | Tile::Pipe(_)
-                | Tile::Cutter(_)
-                | Tile::Sprinkler(_)
-                | Tile::Rock
-                | Tile::Drainer
+            TileKind::Seed(_)
+                | TileKind::Light(_)
+                | TileKind::Soil(_)
+                | TileKind::Water(_)
+                | TileKind::Poop(_)
+                | TileKind::Power
+                | TileKind::Wire(_)
+                | TileKind::Pipe(_)
+                | TileKind::Cutter(_)
+                | TileKind::Sprinkler(_)
+                | TileKind::Rock
+                | TileKind::Drainer
         )
     }
 
     pub fn transmits_power(&self) -> bool {
         matches!(
             self,
-            Tile::Power | Tile::Wire(_) | Tile::Light(_) | Tile::Cutter(_)
+            TileKind::Power | TileKind::Wire(_) | TileKind::Light(_) | TileKind::Cutter(_)
         )
     }
 
     pub fn is_piping(&self) -> bool {
-        matches!(self, Tile::Drainer | Tile::Pipe(_) | Tile::Sprinkler(_))
+        matches!(
+            self,
+            TileKind::Drainer | TileKind::Pipe(_) | TileKind::Sprinkler(_)
+        )
     }
 
     pub fn action_progress(&self) -> Option<R32> {
         match self {
-            Tile::Leaf(leaf) => leaf.growth_timer.map(|t| R32::ONE - t),
-            Tile::Water(lifetime) | Tile::Poop(lifetime) => Some(lifetime.ratio()),
-            Tile::Cutter(cutter) => Some(cutter.cooldown.ratio()),
-            Tile::Bug(bug) => match &bug.state {
+            TileKind::Leaf(leaf) => leaf.growth_timer.map(|t| R32::ONE - t),
+            TileKind::Water(lifetime) | TileKind::Poop(lifetime) => Some(lifetime.ratio()),
+            TileKind::Cutter(cutter) => Some(cutter.cooldown.ratio()),
+            TileKind::Bug(bug) => match &bug.state {
                 BugState::Hungry { eating_timer, .. } => {
                     let t = eating_timer.ratio();
                     (t < Time::ONE).then_some(t)
@@ -396,11 +429,11 @@ impl Grid {
         Self {
             bounds: Aabb2::point(vec2(0, 5)).extend_symmetric(vec2(30, 15)),
             tiles: hashmap! {
-                vec2(0, 0) => Tile::Soil(SoilState::Dry),
-                vec2(0, 9) => Tile::Light(false),
-                vec2(0, 10) => Tile::Wire(false),
-                vec2(0, 11) => Tile::Wire(false),
-                vec2(-1, 11) => Tile::Power,
+                vec2(0, 0) => Tile::new(TileKind::Soil(SoilState::Dry)),
+                vec2(0, 9) => Tile::new(TileKind::Light(false)),
+                vec2(0, 10) => Tile::new(TileKind::Wire(false)),
+                vec2(0, 11) => Tile::new(TileKind::Wire(false)),
+                vec2(-1, 11) => Tile::new(TileKind::Power),
             },
         }
     }
@@ -465,7 +498,7 @@ impl Grid {
 
     pub fn is_tile_lit(&self, pos: vec2<ICoord>, config: &Config) -> bool {
         self.all_tiles().any(|light| {
-            matches!(light.tile, Tile::Light(_))
+            matches!(light.tile.kind, TileKind::Light(_))
                 && logic::manhattan_distance(pos, light.pos) <= config.light_radius
         })
     }
@@ -539,7 +572,7 @@ impl Model {
                 target: DroneTarget::MoveTo(vec2::ZERO),
                 action_progress: R32::ZERO,
             },
-            inventory: vec![(Tile::Seed(PlantKind::TypeA), 1)],
+            inventory: vec![(TileKind::Seed(PlantKind::TypeA), 1)],
 
             config,
             context,

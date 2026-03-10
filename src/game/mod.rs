@@ -39,8 +39,8 @@ pub struct CursorState {
 #[derive(Debug)]
 pub enum InputState {
     Idle,
-    PlaceTile(Tile),
-    BuyTile(Tile),
+    PlaceTile(TileKind),
+    BuyTile(TileKind),
 }
 
 impl GameState {
