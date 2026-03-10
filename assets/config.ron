@@ -31,6 +31,7 @@ Config(
     animations: (
         tile_spawn: 0.75,
         tile_despawn: 1.2,
+        bug_move: 1.0,
     ),
 
     plants: {

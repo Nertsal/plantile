@@ -46,6 +46,7 @@ pub struct Config {
 pub struct ConfigAnimations {
     pub tile_spawn: Time,
     pub tile_despawn: Time,
+    pub bug_move: Time,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -173,36 +174,37 @@ pub struct SpritesTiles {
 }
 
 impl SpritesTiles {
-    pub fn get_texture(&self, tile: &TileKind) -> &PixelTexture {
+    pub fn get_texture(&self, tile: &TileKind) -> Option<&PixelTexture> {
         match tile {
+            TileKind::GhostBlock => None,
             TileKind::Leaf(leaf) => match leaf.kind {
-                PlantKind::TypeA => &self.plant_a,
-                PlantKind::TypeB => &self.plant_b,
-                PlantKind::TypeC => &self.plant_c,
-                PlantKind::TypeD => &self.plant_d,
+                PlantKind::TypeA => Some(&self.plant_a),
+                PlantKind::TypeB => Some(&self.plant_b),
+                PlantKind::TypeC => Some(&self.plant_c),
+                PlantKind::TypeD => Some(&self.plant_d),
             },
             TileKind::Seed(kind) => match kind {
-                PlantKind::TypeA => &self.seed_a,
-                PlantKind::TypeB => &self.seed_b,
-                PlantKind::TypeC => &self.seed_c,
-                PlantKind::TypeD => &self.seed_d,
+                PlantKind::TypeA => Some(&self.seed_a),
+                PlantKind::TypeB => Some(&self.seed_b),
+                PlantKind::TypeC => Some(&self.seed_c),
+                PlantKind::TypeD => Some(&self.seed_d),
             },
-            TileKind::Light(_) => &self.light,
+            TileKind::Light(_) => Some(&self.light),
             TileKind::Soil(state) => match state {
-                SoilState::Dry => &self.soil_dry,
-                SoilState::Watered => &self.soil,
-                SoilState::Rich => &self.soil_rich,
+                SoilState::Dry => Some(&self.soil_dry),
+                SoilState::Watered => Some(&self.soil),
+                SoilState::Rich => Some(&self.soil_rich),
             },
-            TileKind::Water(_) => &self.water,
-            TileKind::Bug(_) => &self.bug,
-            TileKind::Poop(_) => &self.poop,
-            TileKind::Power => &self.power,
-            TileKind::Wire(_) => &self.wire,
-            TileKind::Drainer => &self.drain,
-            TileKind::Cutter(_) => &self.cutter,
-            TileKind::Pipe(_) => &self.pipe,
-            TileKind::Sprinkler(_) => &self.sprinkler,
-            TileKind::Rock => &self.rock,
+            TileKind::Water(_) => Some(&self.water),
+            TileKind::Bug(_) => Some(&self.bug),
+            TileKind::Poop(_) => Some(&self.poop),
+            TileKind::Power => Some(&self.power),
+            TileKind::Wire(_) => Some(&self.wire),
+            TileKind::Drainer => Some(&self.drain),
+            TileKind::Cutter(_) => Some(&self.cutter),
+            TileKind::Pipe(_) => Some(&self.pipe),
+            TileKind::Sprinkler(_) => Some(&self.sprinkler),
+            TileKind::Rock => Some(&self.rock),
         }
     }
 }

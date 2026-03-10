@@ -29,6 +29,17 @@ impl Model {
                     }
                     continue;
                 }
+                TileState::Moving { timer, delta } => {
+                    timer.remaining -= delta_time / self.config.animations.bug_move;
+                    let delta = *delta;
+                    if timer.remaining <= Time::ZERO
+                        && let Some(mut tile) = self.grid.remove_tile(pos)
+                    {
+                        tile.tile.state = TileState::Idle;
+                        self.grid.set_tile(pos + delta, tile.tile);
+                    }
+                    continue;
+                }
                 TileState::Idle => {}
                 TileState::Despawning(timer) => {
                     timer.remaining -= delta_time / self.config.animations.tile_despawn;
@@ -40,6 +51,7 @@ impl Model {
             }
 
             match tile.tile.kind {
+                TileKind::GhostBlock => {}
                 TileKind::Leaf(_) => self.update_plant(pos, delta_time),
                 TileKind::Power => {}
                 TileKind::Light(_) | TileKind::Wire(_) => {
@@ -172,22 +184,14 @@ impl Model {
                             vec2(0, delta.y.signum())
                         };
 
-                        // TODO: animation
                         if grid.get_tile(tile.pos + dir).is_none()
-                            && let Some(mut tile) = grid.remove_tile(pos)
+                            && let Some(tile) = grid.get_tile_mut(pos)
                             && let TileKind::Bug(bug) = &mut tile.tile.kind
                         {
                             bug.move_timer = self.config.bug_move_time;
-                            grid.set_tile(tile.pos + dir, tile.tile);
+                            tile.tile.state.moving(dir);
+                            grid.set_tile(pos + dir, Tile::new(TileKind::GhostBlock));
                         }
-                        // if grid.get_tile(tile.pos + dir).is_none()
-                        //     && let Some(tile) = grid.get_tile_mut(pos)
-                        //     && let TileKind::Bug(bug) = &mut tile.tile.kind
-                        // {
-                        //     bug.move_timer = self.config.bug_move_time;
-                        //     tile.tile.state = TileState::Moving(dir);
-                        //     grid.set_tile(tile.pos + dir, Tile::new(TileKind::GhostBlock));
-                        // }
                     };
 
                     match &mut bug.state {

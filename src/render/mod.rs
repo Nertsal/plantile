@@ -117,7 +117,9 @@ impl GameRender {
             let Some(tile) = model.grid.get_tile(pos) else {
                 continue;
             };
-            let texture = sprites.tiles.get_texture(&tile.tile.kind);
+            let Some(texture) = sprites.tiles.get_texture(&tile.tile.kind) else {
+                continue;
+            };
             let mult = match tile.tile.kind {
                 TileKind::Light(connected)
                 | TileKind::Wire(connected)
@@ -161,6 +163,18 @@ impl GameRender {
                     let rotation = 5.0 + 5.0 * t;
                     transform *=
                         mat3::scale_uniform(scale) * mat3::rotate(Angle::from_degrees(rotation));
+                }
+                TileState::Moving { timer, delta } => {
+                    let t = timer.ratio().as_f32();
+                    let t = crate::util::smoothstep(1.0 - t);
+                    let offset = model
+                        .grid_visual
+                        .tile_bounds(pos + *delta)
+                        .center()
+                        .as_f32()
+                        - model.grid_visual.tile_bounds(pos).center().as_f32();
+                    let offset = offset / offset.len_sqr() * t;
+                    transform *= mat3::translate(offset);
                 }
                 TileState::Idle => {
                     if let Some((_, t)) = self.hover_animation.iter().find(|(p, _)| *p == pos) {
@@ -290,8 +304,9 @@ impl GameRender {
         };
         let ghost_tile =
             |pos: vec2<ICoord>, tile: &TileKind, framebuffer: &mut ugli::Framebuffer<'_>| {
-                if model.grid.get_tile(pos).is_none() {
-                    let texture = sprites.tiles.get_texture(tile);
+                if model.grid.get_tile(pos).is_none()
+                    && let Some(texture) = sprites.tiles.get_texture(tile)
+                {
                     self.util.draw_on_tile(
                         &model.grid_visual,
                         pos,
@@ -449,7 +464,10 @@ impl GameRender {
 
         // Inventory items
         for (widget, (tile, count)) in ui.inventory_items.iter().zip(&model.inventory) {
-            let texture = &sprites.tiles.get_texture(tile);
+            let Some(texture) = &sprites.tiles.get_texture(tile) else {
+                // TODO: placeholder texture
+                continue;
+            };
             self.ui
                 .draw_texture(widget.position, texture, Color::WHITE, 1.0, framebuffer);
 
@@ -490,7 +508,10 @@ impl GameRender {
                 })
                 .map(|item| item.unlocked_at);
 
-            let texture = &sprites.tiles.get_texture(tile);
+            let Some(texture) = &sprites.tiles.get_texture(tile) else {
+                // TODO: placeholder texture
+                continue;
+            };
             let color = if unlock_cost.is_some() {
                 Color::new(0.5, 0.5, 0.5, 1.0)
             } else {

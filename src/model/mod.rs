@@ -276,6 +276,10 @@ pub enum TileState {
     Despawning(Lifetime),
     /// Similar to [`Spawning`] but different semantics.
     Transforming(Lifetime),
+    Moving {
+        timer: Lifetime,
+        delta: vec2<ICoord>,
+    },
 }
 
 impl TileState {
@@ -292,10 +296,20 @@ impl TileState {
     pub fn transform(&mut self) {
         *self = Self::Transforming(Lifetime::new(Time::ONE));
     }
+
+    pub fn moving(&mut self, delta: vec2<ICoord>) {
+        *self = Self::Moving {
+            timer: Lifetime::new(Time::ONE),
+            delta,
+        };
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TileKind {
+    /// Not a real tile, but a placeholder to prevent stuff from happening.
+    /// Used by animations and such.
+    GhostBlock,
     Seed(PlantKind),
     Leaf(Leaf),
     Light(bool),
@@ -315,6 +329,7 @@ pub enum TileKind {
 impl TileKind {
     pub fn name(&self) -> &'static str {
         match self {
+            TileKind::GhostBlock => "Huh?",
             TileKind::Seed(kind) => match kind {
                 PlantKind::TypeA => "Seed (A)",
                 PlantKind::TypeB => "Seed (B)",
@@ -348,6 +363,7 @@ impl TileKind {
 
     pub fn description(&self) -> &'static str {
         match self {
+            TileKind::GhostBlock => "You are not supposed to see this",
             TileKind::Seed(kind) => match kind {
                 PlantKind::TypeA => "Grows from Dry Soil",
                 PlantKind::TypeB => "Grows from Soil",
