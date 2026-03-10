@@ -22,7 +22,7 @@ impl Model {
             };
 
             match &mut tile.tile.state {
-                TileState::Spawning(timer) => {
+                TileState::Spawning(timer) | TileState::Transforming(timer) => {
                     timer.remaining -= delta_time / self.config.animations.tile_spawn;
                     if timer.remaining <= Time::ZERO {
                         tile.tile.state = TileState::Idle;
@@ -96,15 +96,16 @@ impl Model {
                             PlantKind::TypeC => unreachable!(),
                             PlantKind::TypeD => state >= SoilState::Rich,
                         });
-                    if let Some((soil_pos, _soil_state)) = soil {
+                    if let Some((soil_pos, _soil_state)) = soil
+                        && let Some(soil) = self.grid.get_tile_mut(soil_pos)
+                        && let TileKind::Soil(soil_state) = &mut soil.tile.kind
+                    {
                         // Grow into a plant
-                        // TODO: animation
+                        // TODO: gradual usage of water from soil
+                        *soil_state = SoilState::Dry;
+                        soil.tile.state.transform();
                         self.grid
                             .set_tile(pos, Tile::new(TileKind::Leaf(Leaf::new(plant_kind).root())));
-                        // TODO: animation
-                        // TODO: gradual usage of water from soil
-                        self.grid
-                            .set_tile(soil_pos, Tile::new(TileKind::Soil(SoilState::Dry)));
                     }
                 }
                 TileKind::Soil(state) => match state {
@@ -123,8 +124,8 @@ impl Model {
                             water.tile.state.despawn();
                             let soil = self.grid.get_tile_mut(pos).unwrap();
                             if let TileKind::Soil(state) = &mut soil.tile.kind {
-                                // TODO: animation
                                 *state = SoilState::Watered;
+                                soil.tile.state.transform();
                             }
                         }
                     }
@@ -140,8 +141,8 @@ impl Model {
                             poop.tile.state.despawn();
                             let soil = self.grid.get_tile_mut(pos).unwrap();
                             if let TileKind::Soil(state) = &mut soil.tile.kind {
-                                // TODO: animation
                                 *state = SoilState::Rich;
+                                soil.tile.state.transform();
                             }
                         }
                     }
@@ -259,7 +260,6 @@ impl Model {
                                     .find(|tile| tile.tile.is_none())
                                     .map(|tile| tile.pos);
                                 if let Some(target) = target {
-                                    // TODO: animation
                                     self.grid.set_tile(
                                         target,
                                         Tile::new(TileKind::Poop(Lifetime::new(
@@ -483,7 +483,6 @@ impl Model {
                     rng.gen_range(bounds.min.y..=bounds.max.y),
                 );
                 if self.grid.get_tile(pos).is_none() {
-                    // TODO: animation
                     self.grid.set_tile(pos, Tile::new(TileKind::Rock));
                     break;
                 }
@@ -512,7 +511,6 @@ impl Model {
                     let offset = vec2(rng.gen_range(-2..=2), rng.gen_range(-2..=2));
                     let target = anchor + offset;
                     if self.grid.in_bounds(target) && self.grid.get_tile(target).is_none() {
-                        // TODO: animation
                         self.grid.set_tile(
                             target,
                             Tile::new(TileKind::Water(Lifetime::new(self.config.water_lifetime))),
@@ -534,7 +532,6 @@ impl Model {
                     rng.gen_range(bounds.min.y..=bounds.max.y),
                 );
                 if self.grid.get_tile(pos).is_none() && !self.grid.is_tile_lit(pos, &self.config) {
-                    // TODO: animation
                     self.grid.set_tile(
                         pos,
                         Tile::new(TileKind::Bug(Bug {
@@ -687,7 +684,6 @@ impl Model {
                         } else {
                             self.inventory.remove(inv_item_idx);
                         }
-                        // TODO: animation
                         self.grid.set_tile(position, Tile::new(tile.clone()));
                     }
                 }
@@ -701,7 +697,6 @@ impl Model {
                         DroneTarget::MoveTo(self.grid_visual.world_to_grid(self.drone.position));
                     let cost = self.config.get_cost(&tile);
                     if self.grid.get_tile(position).is_none() && self.money >= cost {
-                        // TODO: animation
                         self.grid.set_tile(position, Tile::new(tile.clone()));
                         self.money -= cost;
                     }

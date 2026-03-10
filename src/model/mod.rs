@@ -274,6 +274,8 @@ pub enum TileState {
     Spawning(Lifetime),
     Idle,
     Despawning(Lifetime),
+    /// Similar to [`Spawning`] but different semantics.
+    Transforming(Lifetime),
 }
 
 impl TileState {
@@ -285,6 +287,10 @@ impl TileState {
         if !matches!(self, Self::Despawning(_)) {
             *self = Self::Despawning(Lifetime::new(Time::ONE));
         }
+    }
+
+    pub fn transform(&mut self) {
+        *self = Self::Transforming(Lifetime::new(Time::ONE));
     }
 }
 

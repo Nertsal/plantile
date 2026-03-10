@@ -146,6 +146,14 @@ impl GameRender {
                     transform *=
                         mat3::scale_uniform(scale) * mat3::rotate(Angle::from_degrees(rotation));
                 }
+                TileState::Transforming(timer) => {
+                    let t = timer.ratio().as_f32();
+                    let t = 1.0 - crate::util::ease_out_elastic_with(1.0 - t, 3.0, 1.0);
+                    let scale = 1.0 + 0.15 * t;
+                    let rotation = 10.0 * t;
+                    transform *=
+                        mat3::scale_uniform(scale) * mat3::rotate(Angle::from_degrees(rotation));
+                }
                 TileState::Despawning(timer) => {
                     let t = timer.ratio().as_f32();
                     let t = 1.0 - crate::util::ease_out_elastic_with(1.0 - t, 3.0, 1.0);

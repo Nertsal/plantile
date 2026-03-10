@@ -148,14 +148,12 @@ impl Model {
         if let Some(grow) = grow_left {
             let mut leaf = Leaf::new(kind);
             leaf.connections.set(position - grow, Some(()));
-            // TODO: animation
             self.grid.set_tile(grow, Tile::new(TileKind::Leaf(leaf)));
             self.context.sfx.play(&self.context.assets.sounds.grow);
         }
         if let Some(grow) = grow_right {
             let mut leaf = Leaf::new(kind);
             leaf.connections.set(position - grow, Some(()));
-            // TODO: animation
             self.grid.set_tile(grow, Tile::new(TileKind::Leaf(leaf)));
         }
 
