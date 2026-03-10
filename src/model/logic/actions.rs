@@ -63,49 +63,6 @@ impl Model {
         true
     }
 
-    pub fn cut_plant(&mut self, target: vec2<ICoord>) -> bool {
-        log::debug!("cut plant at {}", target);
-        let Some(tile) = self.grid.get_tile(target) else {
-            return false;
-        };
-        let TileKind::Leaf(leaf) = &tile.tile.kind else {
-            return false;
-        };
-
-        let plant_positions = get_all_connected(&self.grid, target, |tile| {
-            if let TileKind::Leaf(other) = &tile.tile.kind
-                && leaf.kind == other.kind
-            {
-                true
-            } else {
-                false
-            }
-        });
-
-        // Earn money
-        let size = plant_positions.len();
-        self.money += size as Money * self.config.plants[&leaf.kind].price;
-
-        // Remove stem and leaves
-        for pos in plant_positions {
-            if let Some(tile) = self.grid.get_tile_mut(pos) {
-                tile.tile.state.despawn();
-                if let TileKind::Leaf(leaf) = &tile.tile.kind
-                    && leaf.root
-                {
-                    // Replace root with a new seed
-                    // TODO: actually this is outdated behavior
-                    let kind = leaf.kind;
-                    self.grid.set_tile(pos, Tile::new(TileKind::Seed(kind)));
-                }
-            }
-        }
-
-        self.context.sfx.play(&self.context.assets.sounds.rock);
-
-        true
-    }
-
     pub fn collect(&mut self, target: vec2<ICoord>) {
         if self.inventory.len() >= INVENTORY_MAX_SIZE {
             // Inventory already maxed

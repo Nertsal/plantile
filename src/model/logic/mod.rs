@@ -444,7 +444,7 @@ impl Model {
                 // Check connectivity to root
                 let mut rooted = false;
                 let group = get_all_connected(&self.grid, tile.pos, |other| {
-                    if other.tile.state.interactive()
+                    if target != other.pos
                         && let TileKind::Leaf(other) = &other.tile.kind
                         && other.kind == leaf.kind
                     {
@@ -636,7 +636,7 @@ impl Model {
                         DroneTarget::MoveTo(self.grid_visual.world_to_grid(self.drone.position));
                     match action {
                         DroneAction::CutPlant => {
-                            self.cut_plant(position);
+                            self.cut_plant_tile(position, true);
                         }
                         DroneAction::Collect => {
                             self.collect(position);

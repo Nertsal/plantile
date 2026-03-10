@@ -30,10 +30,10 @@ impl Model {
         let mut connections = leaf.connections.clone();
         for delta in Connections::NEIGHBORS {
             if connections.get(delta).is_some()
-                && self
-                    .grid
-                    .get_tile(position + delta)
-                    .is_none_or(|tile| !matches!(tile.tile.kind, TileKind::Leaf(_)))
+                && self.grid.get_tile(position + delta).is_none_or(|tile| {
+                    matches!(tile.tile.state, TileState::Despawning(_))
+                        || !matches!(tile.tile.kind, TileKind::Leaf(_))
+                })
             {
                 // Connection dropped
                 connections.set(delta, None);
