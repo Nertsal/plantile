@@ -214,12 +214,18 @@ impl geng::State for GameState {
                     && (self.cursor.screen_pos - drag.from_screen).len_sqr() < 0.1
                     && (self.real_time - drag.from_real_time).as_f32() < 0.5
                 {
-                    // Stop drone action on short right click
-                    self.model.drone.target = DroneTarget::MoveTo(
-                        self.model
-                            .grid_visual
-                            .world_to_grid(self.model.drone.position),
-                    );
+                    // Short right click - cancel action
+                    if !matches!(self.input_state, InputState::Idle) {
+                        // Stop tile placement
+                        self.input_state = InputState::Idle;
+                    } else {
+                        // Stop drone action
+                        self.model.drone.target = DroneTarget::MoveTo(
+                            self.model
+                                .grid_visual
+                                .world_to_grid(self.model.drone.position),
+                        );
+                    }
                 }
             }
             _ => {}
