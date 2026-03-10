@@ -83,7 +83,10 @@ impl Model {
                 TileKind::Water(lifetime) | TileKind::Poop(lifetime) => {
                     *lifetime = Lifetime::new(self.config.water_lifetime);
                 }
-                TileKind::Light(powered) | TileKind::Wire(powered) => *powered = false,
+                TileKind::Light(powered)
+                | TileKind::Wire(powered)
+                | TileKind::Sprinkler(powered) => *powered = false,
+                TileKind::Cutter(cutter) => *cutter = Cutter::default(),
                 _ => {}
             }
             self.inventory_add(kind, 1);
