@@ -263,7 +263,7 @@ pub struct Tile {
 impl Tile {
     pub fn new(kind: TileKind) -> Self {
         Self {
-            state: TileState::Idle,
+            state: TileState::Spawning(Lifetime::new(R32::ONE)),
             kind,
         }
     }
@@ -271,7 +271,7 @@ impl Tile {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TileState {
-    // Spawning(Lifetime),
+    Spawning(Lifetime),
     Idle,
 }
 

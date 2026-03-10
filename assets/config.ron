@@ -28,6 +28,10 @@ Config(
     cutter_radius: 1,
     cutter_cooldown: 60,
 
+    animations: (
+        tile_spawn: 0.75,
+    ),
+
     plants: {
         TypeA: (
             growth_time: 3.0,

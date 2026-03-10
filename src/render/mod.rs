@@ -137,11 +137,20 @@ impl GameRender {
 
             let color = Color::new(mult, mult, mult, 1.0);
             let mut transform = mat3::identity();
-            if let Some((_, t)) = self.hover_animation.iter().find(|(p, _)| *p == pos) {
+            if let TileState::Spawning(timer) = &tile.tile.state {
+                // Spawn animation
+                let t = timer.ratio().as_f32();
+                let t = 1.0 - crate::util::ease_out_elastic_with(1.0 - t, 3.0, 1.0);
+                let scale = 1.0 + 0.15 * t;
+                let rotation = -10.0 * t;
+                transform *=
+                    mat3::scale_uniform(scale) * mat3::rotate(Angle::from_degrees(rotation));
+            } else if let Some((_, t)) = self.hover_animation.iter().find(|(p, _)| *p == pos) {
+                // Hover animation
                 let t = t.as_f32();
                 let t = 1.0 - crate::util::ease_out_elastic_with(t, 3.0, 1.0);
-                let stretch = 1.0 + t * 0.3;
-                let squish = 1.0 - t * 0.3;
+                let stretch = 1.0 + 0.3 * t;
+                let squish = 1.0 - 0.3 * t;
                 transform *= mat3::scale(vec2(squish, stretch));
             }
             self.util.draw_on_tile_with(

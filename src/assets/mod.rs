@@ -38,6 +38,13 @@ pub struct Config {
 
     pub plants: HashMap<PlantKind, ConfigPlant>,
     pub shop: Vec<ConfigShopItem>,
+
+    pub animations: ConfigAnimations,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ConfigAnimations {
+    pub tile_spawn: Time,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

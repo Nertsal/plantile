@@ -20,6 +20,17 @@ impl Model {
             let Some(tile) = self.grid.get_tile_mut(pos) else {
                 continue;
             };
+
+            match &mut tile.tile.state {
+                TileState::Spawning(timer) => {
+                    timer.remaining -= delta_time / self.config.animations.tile_spawn;
+                    if timer.remaining <= Time::ZERO {
+                        tile.tile.state = TileState::Idle;
+                    }
+                }
+                TileState::Idle => {}
+            }
+
             match tile.tile.kind {
                 TileKind::Leaf(_) => self.update_plant(pos, delta_time),
                 TileKind::Power => {}
