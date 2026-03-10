@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+<head></head>
+<body>
+
+                <style id="sheets">.opt { flex-grow: 1; transition: flex-grow 0.3s, background-color 0.4s; cursor: pointer; }
+.opt:hover { flex-grow: 1.08; }
+#text { display: flex; z-index: 10; position: absolute; top: 0px; bottom: 0px; width: 100%; height: 100%; pointer-events: none; flex-direction: row; }
+.h2 { color: white; }
+#text div { display: flex; flex-direction: column; justify-content: center; align-items: center; flex-grow: 1; width: 100%; font-size: 200%; opacity: 0.5; transition: opacity 0.6s, transform 0.3s; font-weight: bold; text-align: center; color: rgb(204, 204, 204); text-shadow: rgb(204, 204, 204) 0px 1px 0px, rgb(201, 201, 201) 0px 2px 0px, rgb(187, 187, 187) 0px 3px 0px, rgb(185, 185, 185) 0px 4px 0px, rgb(170, 170, 170) 0px 5px 0px, rgba(0, 0, 0, 0.1) 0px 6px 1px, rgba(0, 0, 0, 0.1) 0px 0px 5px, rgba(0, 0, 0, 0.3) 0px 1px 3px, rgba(0, 0, 0, 0.2) 0px 3px 5px, rgba(0, 0, 0, 0.25) 0px 5px 10px, rgba(0, 0, 0, 0.2) 0px 10px 10px, rgba(0, 0, 0, 0.15) 0px 20px 20px; height: unset; font-family: Nunito; }
+#text div subtitle { text-shadow: none; font-size: 16pt; }
+#text .opaque { opacity: 1; }
+#left { background-color: rgb(29, 29, 54); margin-left: -100%; margin-top: -100%; }
+#right { background-color: rgb(98, 35, 60); margin-right: -100%; margin-bottom: -100%; }
+#container { transform: skew(205deg); width: 100%; height: 100%; display: flex; flex-direction: row; gap: 12px; background-color: rgb(145, 150, 146); transition: background-color 0.4s; }
+#right:hover { background-color: rgb(164, 59, 101); }
+#left-text { margin-left: 0px; margin-top: 12.6785%; }
+#right-text { margin-right: 0px; margin-bottom: 12.6785%; }
+#left:hover { background-color: rgb(49, 49, 91); }
+body { margin: 0px; overflow: hidden; height: 100vh; }
+#container:hover { background-color: rgb(242, 251, 244); }</style>
+                <script type="text/javascript">
+                    window.onload = () => {
+                        document.querySelector("#left").addEventListener('mouseenter', () => document.querySelector("#left-text").classList.add("opaque"))
+                        document.querySelector("#left").addEventListener('mouseleave', () => document.querySelector("#left-text").classList.remove("opaque"))
+                        document.querySelector("#right").addEventListener('mouseenter', () => document.querySelector("#right-text").classList.add("opaque"))
+                        document.querySelector("#right").addEventListener('mouseleave', () => document.querySelector("#right-text").classList.remove("opaque"))
+                    }
+                </script>
+                <div id="container">
+                    <div id="left" class="opt" onclick="window.location.replace('left/index.html')">
+                        &nbsp;
+                    </div>
+                    <div id="right" class="opt" onclick="window.location.replace('right/index.html')">
+                        &nbsp;
+                    </div>
+                </div>
+                <div id="text">
+                    <div id="left-text" class="">
+                        <h2 class="h2">Jam</h2>
+                        <subtitle>Made for D2Jam</subtitle>
+                    </div>
+                    <div id="right-text" class="">
+                        <h2 class="h2">Post-Jam</h2>
+                        <subtitle>Polished version</subtitle>
+                    </div>
+                </div>
+            
+</body>
+</html>
