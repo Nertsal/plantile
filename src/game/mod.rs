@@ -216,7 +216,7 @@ impl geng::State for GameState {
                 if let geng::MouseButton::Right | geng::MouseButton::Middle = button
                     && let Some(drag) = self.camera_drag.take() // Stop dragging camera
                     && let geng::MouseButton::Right = button
-                    && (self.cursor.screen_pos - drag.from_screen).len_sqr() < 0.1
+                    && (self.cursor.screen_pos - drag.from_screen).len_sqr() < 5.0
                     && (self.real_time - drag.from_real_time).as_f32() < 0.5
                 {
                     // Short right click - cancel action
