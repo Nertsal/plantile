@@ -503,19 +503,30 @@ impl Model {
                 && leaf.kind == plant_kind
             {
                 // Check connectivity to root
-                let mut rooted = false;
-                let group = get_all_connected(&self.grid, tile.pos, |other| {
-                    if other.tile.state.interactive()
-                        && let TileKind::Seed(kind) = other.tile.kind
-                        && kind == plant_kind
+                // let mut rooted = false;
+                // let group = get_all_connected(&self.grid, tile.pos, |other| {
+                //     if other.tile.state.interactive()
+                //         && let TileKind::Seed(kind) = other.tile.kind
+                //         && kind == plant_kind
+                //     {
+                //         rooted = true;
+                //     }
+                //     if target != other.pos
+                //         && let TileKind::Leaf(other) = &other.tile.kind
+                //         && other.kind == leaf.kind
+                //     {
+                //         true
+                //     } else {
+                //         false
+                //     }
+                // });
+
+                let group = get_whole_plant(&self.grid, tile.pos);
+                let rooted = group.iter().any(|&pos| {
+                    if let Some(tile) = self.grid.get_tile(pos)
+                        && let TileKind::Seed(seed) = tile.tile.kind
                     {
-                        rooted = true;
-                    }
-                    if target != other.pos
-                        && let TileKind::Leaf(other) = &other.tile.kind
-                        && other.kind == leaf.kind
-                    {
-                        true
+                        seed == plant_kind
                     } else {
                         false
                     }
@@ -772,6 +783,39 @@ impl Model {
             }
         }
     }
+}
+
+fn get_whole_plant(grid: &Grid, start: vec2<ICoord>) -> Vec<vec2<ICoord>> {
+    let mut connected = vec![start];
+    let mut to_check = vec![start];
+    while let Some(pos) = to_check.pop() {
+        if let Some(tile) = grid.get_tile(pos)
+            && let TileKind::Leaf(leaf) = &tile.tile.kind
+        {
+            let connections: Vec<_> = leaf
+                .connections
+                .get_connections(tile.pos)
+                .map(|other| other.pos)
+                .filter(|&other| {
+                    !connected.contains(&other)
+                        && grid.get_tile(other).is_some_and(|other| {
+                            if other.tile.state.interactive() {
+                                match other.tile.kind {
+                                    TileKind::Leaf(ref other) => other.kind == leaf.kind,
+                                    TileKind::Seed(kind) => kind == leaf.kind,
+                                    _ => false,
+                                }
+                            } else {
+                                false
+                            }
+                        })
+                })
+                .collect();
+            connected.extend(connections.clone());
+            to_check.extend(connections.clone());
+        }
+    }
+    connected
 }
 
 fn get_all_connected(

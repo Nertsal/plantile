@@ -16,6 +16,7 @@ geng-utils = "0.4.0"
 parry2d = "0.13.5"
 rusttype = { version = "0.9.3", features = ["gpu_cache"] }
 serde = { version = "1.0.219", features = ["derive"] }
+pathfinding = "4.15.0"
 
 [patch.crates-io]
 geng = { git = "https://github.com/geng-engine/geng", rev = "1e35585545463c919ff0da849af4fdad69ab02fa" }
