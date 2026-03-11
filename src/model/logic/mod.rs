@@ -442,6 +442,8 @@ impl Model {
                                     self.cut_plant_tile(plant, true);
                                 }
                             }
+                        } else {
+                            cutter.cooldown.remaining = cutter.cooldown.max;
                         }
                     }
                 }
