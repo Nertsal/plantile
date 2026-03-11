@@ -449,11 +449,10 @@ impl Grid {
         Self {
             bounds: Aabb2::point(vec2(0, 5)).extend_symmetric(vec2(30, 15)),
             tiles: hashmap! {
-                vec2(0, 0) => Tile::new(TileKind::Soil(SoilState::Dry)),
-                vec2(0, 9) => Tile::new(TileKind::Light(false)),
-                vec2(0, 10) => Tile::new(TileKind::Wire(false)),
-                vec2(0, 11) => Tile::new(TileKind::Wire(false)),
-                vec2(-1, 11) => Tile::new(TileKind::Power),
+                vec2(0, 1) => Tile::new(TileKind::Soil(SoilState::Dry)),
+                vec2(0, 7) => Tile::new(TileKind::Light(false)),
+                vec2(0, 8) => Tile::new(TileKind::Wire(false)),
+                vec2(-1, 8) => Tile::new(TileKind::Power),
             },
         }
     }

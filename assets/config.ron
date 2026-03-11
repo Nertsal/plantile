@@ -7,16 +7,16 @@ Config(
     seed_grow_only_up: true,
 
     action_duration: {
-        CutPlant: 3.0,
+        CutPlant: 5.0,
         Collect: 2.0,
-        PlaceTile: 2.0,
-        KillBug: 2.5,
+        PlaceTile: 1.0,
+        KillBug: 5,
     },
 
     rock_frequency: 0.05,
-    water_frequency: 0.08,
-    water_lifetime: 10.0,
-    poop_lifetime: 10.0,
+    water_frequency: 0.02,
+    water_lifetime: 30.0,
+    poop_lifetime: 30.0,
 
     bug_frequency: 0.05,
     bug_hunger: 5,
@@ -25,7 +25,7 @@ Config(
     bug_chill_time: 10.0,
     bug_move_time: 5.0,
 
-    light_radius: 11,
+    light_radius: 8,
     drainer_radius: 4,
     cutter_radius: 1,
     cutter_cooldown: 60,
@@ -33,20 +33,20 @@ Config(
     animations: (
         tile_spawn: 0.75,
         tile_despawn: 1.2,
-        bug_move: 1.0,
+        bug_move: 0.4,
     ),
 
     plants: {
         TypeA: (
             growth_time: 3.0,
             growth_time_dark: 10.0,
-            max_size: 15,
+            max_size: 10,
             price: 3,
         ),
         TypeB: (
-            growth_time: 5.0,
-            growth_time_dark: 12.0,
-            max_size: 15,
+            growth_time: 8.0,
+            growth_time_dark: 16.0,
+            max_size: 8,
             price: 10,
         ),
         TypeC: (
@@ -75,7 +75,7 @@ Config(
             tile: Wire(false),
         ),
         (
-            price: 30,
+            price: 20,
             unlocked_at: 0,
             tile: Soil(Dry),
         ),
