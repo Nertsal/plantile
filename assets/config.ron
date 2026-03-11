@@ -8,8 +8,8 @@ Config(
 
     action_duration: {
         CutPlant: 5.0,
-        Collect: 2.0,
-        PlaceTile: 1.0,
+        Collect: 1.0,
+        PlaceTile: 0.5,
         KillBug: 5,
     },
 
