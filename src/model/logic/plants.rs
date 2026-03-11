@@ -58,6 +58,7 @@ impl Model {
         .len();
 
         let_leaf!(let mut plant, leaf);
+        leaf.connections = connections;
 
         if plant_size >= plant_config.max_size {
             // Over max size
@@ -68,7 +69,6 @@ impl Model {
         }
 
         // Update growth timer
-        leaf.connections = connections;
         if leaf.growth_timer.is_none() && connect_count <= 1 {
             leaf.growth_timer = Some(R32::ONE);
         }
