@@ -165,15 +165,7 @@ impl GameRender {
                         mat3::scale_uniform(scale) * mat3::rotate(Angle::from_degrees(rotation));
                 }
                 TileState::Moving { timer, delta } => {
-                    let t = timer.ratio().as_f32();
-                    let t = crate::util::smoothstep(1.0 - t);
-                    let offset = model
-                        .grid_visual
-                        .tile_bounds(pos + *delta)
-                        .center()
-                        .as_f32()
-                        - model.grid_visual.tile_bounds(pos).center().as_f32();
-                    let offset = offset / offset.len_sqr() * t;
+                    let offset = movement_animation(&model.grid_visual, timer, *delta);
                     transform *= mat3::translate(offset);
                 }
                 TileState::Idle => {
@@ -276,10 +268,18 @@ impl GameRender {
         let tile_highlight = |pos: vec2<ICoord>,
                               color: Color,
                               framebuffer: &mut ugli::Framebuffer| {
-            self.util.draw_on_tile(
+            let mut offset = vec2::ZERO;
+            if let Some(tile) = model.grid.get_tile(pos)
+                && let TileState::Moving { timer, delta } = &tile.tile.state
+            {
+                offset = movement_animation(&model.grid_visual, timer, *delta);
+            }
+
+            self.util.draw_on_tile_with(
                 &model.grid_visual,
                 pos,
                 color,
+                mat3::translate(offset),
                 &sprites.tile_select,
                 &model.camera,
                 framebuffer,
@@ -291,7 +291,7 @@ impl GameRender {
                 let tile_bounds = model.grid_visual.tile_bounds(pos).as_f32();
                 let select_size = sprites.tile_select.size().as_f32() / TILE_SIZE_PIXELS.as_f32();
                 let select_bounds = tile_bounds.align_aabb(select_size, vec2(0.5, 0.5));
-                let position = select_bounds.align_pos(vec2(0.0, 1.0)) + vec2(0.1, 0.0);
+                let position = select_bounds.align_pos(vec2(0.0, 1.0)) + vec2(0.1, 0.0) + offset;
                 self.util.draw_text(
                     name,
                     position,
@@ -566,4 +566,10 @@ impl GameRender {
             framebuffer,
         );
     }
+}
+
+fn movement_animation(grid: &GridVisual, timer: &Lifetime, delta: vec2<ICoord>) -> vec2<f32> {
+    let t = timer.ratio().as_f32();
+    let t = crate::util::smoothstep(1.0 - t);
+    grid.tile_size.as_f32() * delta.as_f32() * t
 }
