@@ -51,7 +51,17 @@ impl Model {
             }
 
             match tile.tile.kind {
-                TileKind::GhostBlock => {}
+                TileKind::GhostBlock(ref reason) => {
+                    let justified = match reason {
+                        &ExistentialReason::MoveFrom(reason_pos) => {
+                            self.grid.get_tile(reason_pos).is_some()
+                        }
+                    };
+                    if !justified {
+                        // Ghost's existence is not justified - perish!
+                        self.grid.remove_tile(pos);
+                    }
+                }
                 TileKind::Leaf(_) => self.update_plant(pos, delta_time),
                 TileKind::Power => {}
                 TileKind::Light(_) | TileKind::Wire(_) => {
@@ -217,7 +227,10 @@ impl Model {
                         {
                             bug.move_timer = self.config.bug_move_time;
                             tile.tile.state.moving(dir);
-                            grid.set_tile(pos + dir, Tile::new(TileKind::GhostBlock));
+                            grid.set_tile(
+                                pos + dir,
+                                Tile::new(TileKind::GhostBlock(ExistentialReason::MoveFrom(pos))),
+                            );
                         }
                     };
 

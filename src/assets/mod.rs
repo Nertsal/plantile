@@ -178,7 +178,7 @@ pub struct SpritesTiles {
 impl SpritesTiles {
     pub fn get_texture(&self, tile: &TileKind) -> Option<&PixelTexture> {
         match tile {
-            TileKind::GhostBlock => None,
+            TileKind::GhostBlock(_) => None,
             TileKind::Leaf(leaf) => match leaf.kind {
                 PlantKind::TypeA => Some(&self.plant_a),
                 PlantKind::TypeB => Some(&self.plant_b),

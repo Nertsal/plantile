@@ -290,11 +290,18 @@ impl TileState {
     }
 }
 
+/// All ghosts need a reason to exists, otherwise they perish into oblivion.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum ExistentialReason {
+    /// Another tile is moving.
+    MoveFrom(vec2<ICoord>),
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TileKind {
     /// Not a real tile, but a placeholder to prevent stuff from happening.
     /// Used by animations and such.
-    GhostBlock,
+    GhostBlock(ExistentialReason),
     Seed(PlantKind),
     Leaf(Leaf),
     Light(bool),
@@ -314,7 +321,7 @@ pub enum TileKind {
 impl TileKind {
     pub fn name(&self) -> &'static str {
         match self {
-            TileKind::GhostBlock => "Huh?",
+            TileKind::GhostBlock(_) => "Huh?",
             TileKind::Seed(kind) => match kind {
                 PlantKind::TypeA => "Seed (A)",
                 PlantKind::TypeB => "Seed (B)",
@@ -348,7 +355,7 @@ impl TileKind {
 
     pub fn description(&self) -> &'static str {
         match self {
-            TileKind::GhostBlock => "You are not supposed to see this",
+            TileKind::GhostBlock(_) => "You are not supposed to see this",
             TileKind::Seed(kind) => match kind {
                 PlantKind::TypeA => "Grows from Dry Soil/ Soil/ Rich Soil",
                 PlantKind::TypeB => "Grows from Soil/ Rich Soil",
@@ -364,20 +371,28 @@ impl TileKind {
             TileKind::Light(_) => "Plants grow within range\nRequires Power to function",
             TileKind::Soil(state) => match state {
                 SoilState::Dry => "Consumes adjacent water and turns into soil",
-                SoilState::Watered => "Consumes poop nearby and turns into rich soil\nTurns into dry soil after plant growth",
+                SoilState::Watered => {
+                    "Consumes poop nearby and turns into rich soil\nTurns into dry soil after plant growth"
+                }
                 SoilState::Rich => "Turns into dry soil after plant growth",
             },
             TileKind::Water(_) => "Disappears overtime",
             TileKind::Bug(_) => "Eats Plants and produces Poop\nSpawned in unlit areas",
             TileKind::Poop(_) => "Can be used to nourish the soil\nDisappears overtime",
             TileKind::Power => "Provides power to tiles connected with wires",
-            TileKind::Wire(_) => "Connection between power and light\nCan be destroyed by bugs and plants",
+            TileKind::Wire(_) => {
+                "Connection between power and light\nCan be destroyed by bugs and plants"
+            }
             TileKind::Drainer => {
                 "Collects Water within range to your inventory or to connected Sprinklers"
             }
             TileKind::Cutter(_) => "Automatically cuts adjacent Plants\nRequires Power",
-            TileKind::Pipe(_) => "Connection between water collector and sprinkler\nCan be destroyed by bugs and plants",
-            TileKind::Sprinkler(_) => "Ejects water on adjacent tiles when connected to a drainer with pipes",
+            TileKind::Pipe(_) => {
+                "Connection between water collector and sprinkler\nCan be destroyed by bugs and plants"
+            }
+            TileKind::Sprinkler(_) => {
+                "Ejects water on adjacent tiles when connected to a drainer with pipes"
+            }
             TileKind::Rock => "Blocks plants growth and bugs",
         }
     }

@@ -284,7 +284,9 @@ impl GameRender {
                 &model.camera,
                 framebuffer,
             );
-            if let Some(tile) = model.grid.get_tile(pos) {
+            if let Some(tile) = model.grid.get_tile(pos)
+                && !matches!(tile.tile.kind, TileKind::GhostBlock(_))
+            {
                 let name = tile.tile.kind.name().to_uppercase();
                 let tile_bounds = model.grid_visual.tile_bounds(pos).as_f32();
                 let select_size = sprites.tile_select.size().as_f32() / TILE_SIZE_PIXELS.as_f32();
@@ -322,6 +324,9 @@ impl GameRender {
             let Some(tile) = model.grid.get_tile(pos) else {
                 return;
             };
+            if let TileKind::GhostBlock(_) = tile.tile.kind {
+                return;
+            }
             let text = tile.tile.kind.description();
             if text.is_empty() {
                 return;
