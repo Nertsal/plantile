@@ -565,31 +565,27 @@ impl Model {
         let chance = self.config.water_frequency * delta_time;
         if rng.gen_bool(chance.as_f32().into()) {
             // attempt to spawn
-            let anchors: Vec<_> = self
-                .grid
-                .all_positions()
-                .filter(|pos| {
-                    self.grid.get_tile(*pos).is_some_and(|tile| {
-                        if let TileKind::Leaf(leaf) = &tile.tile.kind {
-                            leaf.growth_timer.is_some()
-                        } else {
-                            false
-                        }
-                    })
-                })
-                .collect();
-            for _ in 0..5 {
-                if let Some(&anchor) = anchors.choose(&mut rng) {
-                    let offset = vec2(rng.gen_range(-2..=2), rng.gen_range(-2..=2));
-                    let target = anchor + offset;
-                    if self.grid.in_bounds(target) && self.grid.get_tile(target).is_none() {
-                        self.grid.set_tile(
-                            target,
-                            Tile::new(TileKind::Water(Lifetime::new(self.config.water_lifetime))),
-                        );
-                        break;
+            let anchors = self.grid.all_positions().filter(|pos| {
+                self.grid.get_tile(*pos).is_some_and(|tile| {
+                    if let TileKind::Leaf(leaf) = &tile.tile.kind {
+                        leaf.growth_timer.is_some()
+                    } else {
+                        false
                     }
-                }
+                })
+            });
+            let range = 2;
+            let candidates = anchors
+                .flat_map(|pos| {
+                    (-range..=range)
+                        .flat_map(move |dx| (-range..=range).map(move |dy| pos + vec2(dx, dy)))
+                })
+                .filter(|&pos| self.grid.in_bounds(pos) && self.grid.get_tile(pos).is_none());
+            if let Some(target) = candidates.choose(&mut rng) {
+                self.grid.set_tile(
+                    target,
+                    Tile::new(TileKind::Water(Lifetime::new(self.config.water_lifetime))),
+                );
             }
         }
 
