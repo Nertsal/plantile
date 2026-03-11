@@ -125,15 +125,8 @@ impl Model {
                         })
                         && let Some(empty) = grow_direction
                             .iter()
-                            .map(|delta| {
-                                let pos = pos - *delta;
-                                Positioned {
-                                    pos,
-                                    tile: self.grid.get_tile(pos).map(|tile| tile.tile),
-                                }
-                            })
-                            .filter(|tile| tile.tile.is_none())
-                            .map(|tile| tile.pos)
+                            .map(|delta| pos - *delta)
+                            .filter(|&pos| plants::can_grow_into(pos, &self.grid))
                             .choose(&mut rng)
                     {
                         // Grow into a plant

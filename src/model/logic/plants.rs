@@ -100,7 +100,7 @@ impl Model {
         let options: Vec<_> = self
             .grid
             .get_neighbors_all(plant.pos)
-            .filter_map(|tile| tile.tile.is_none().then_some(tile.pos))
+            .map(|tile| tile.pos)
             .filter(|&pos| can_grow_into(pos, &self.grid))
             .map(|pos| {
                 let light_d = lights
