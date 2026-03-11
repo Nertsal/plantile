@@ -362,7 +362,8 @@ impl Model {
                         .all_tiles()
                         .find(|tile| {
                             // Collect water within range not adjacent to a sprinkler
-                            matches!(tile.tile.kind, TileKind::Water(_))
+                            tile.tile.state.interactive()
+                                && matches!(tile.tile.kind, TileKind::Water(_))
                                 && manhattan_distance(pos, tile.pos) <= self.config.drainer_radius
                                 && !self
                                     .grid
