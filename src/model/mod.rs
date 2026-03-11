@@ -539,7 +539,7 @@ impl Grid {
 
     pub fn is_tile_lit(&self, pos: vec2<ICoord>, config: &Config) -> bool {
         self.all_tiles().any(|light| {
-            matches!(light.tile.kind, TileKind::Light(_))
+            matches!(light.tile.kind, TileKind::Light(true))
                 && logic::manhattan_distance(pos, light.pos) <= config.light_radius
         })
     }
