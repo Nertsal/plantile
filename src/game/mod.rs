@@ -82,38 +82,13 @@ impl GameState {
                 }
                 InputState::PlaceTile(tile) => {
                     self.model.place_tile(target, tile.clone());
-                    let queued = self
-                        .model
-                        .all_actions()
-                        .filter(|target| {
-                            if let DroneTarget::PlaceTile(_, kind) = target
-                                && kind == tile
-                            {
-                                true
-                            } else {
-                                false
-                            }
-                        })
-                        .count();
-                    let available = self.model.inventory.get(tile).copied().unwrap_or(0);
-                    if available <= queued {
+                    if !self.model.can_place_tile(tile) {
                         self.input_state = InputState::Idle;
                     }
                 }
                 InputState::BuyTile(tile) => {
                     self.model.buy_tile(target, tile.clone());
-                    let queued_cost: Money = self
-                        .model
-                        .all_actions()
-                        .filter_map(|target| {
-                            if let DroneTarget::BuyTile(_, kind) = target {
-                                Some(self.model.config.get_cost(kind))
-                            } else {
-                                None
-                            }
-                        })
-                        .sum();
-                    if self.model.money <= queued_cost + self.model.config.get_cost(tile) {
+                    if !self.model.can_buy_tile(tile) {
                         self.input_state = InputState::Idle;
                     }
                 }
@@ -167,7 +142,7 @@ impl geng::State for GameState {
 
         // UI events
         for (widget, (tile, _)) in self.ui.inventory_items.iter().zip(&self.model.inventory) {
-            if widget.mouse_left.clicked {
+            if widget.mouse_left.clicked && self.model.can_place_tile(tile) {
                 self.input_state = InputState::PlaceTile(tile.clone());
                 break;
             }
@@ -184,14 +159,13 @@ impl geng::State for GameState {
                         && !self.model.unlocked_shop.contains(tile)
                 })
                 .map(|item| item.unlocked_at);
-            let cost = self.model.config.get_cost(tile);
             if widget.mouse_left.clicked {
                 if let Some(unlock) = unlock_cost {
                     if self.model.money >= unlock {
                         self.model.money -= unlock;
                         self.model.unlocked_shop.push(tile.clone());
                     }
-                } else if self.model.money >= cost {
+                } else if self.model.can_buy_tile(tile) {
                     self.input_state = InputState::BuyTile(tile.clone());
                 }
                 break;

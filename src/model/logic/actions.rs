@@ -34,6 +34,23 @@ impl Model {
         }
     }
 
+    pub fn can_place_tile(&self, tile: &TileKind) -> bool {
+        let queued = self
+            .all_actions()
+            .filter(|target| {
+                if let DroneTarget::PlaceTile(_, kind) = target
+                    && kind == tile
+                {
+                    true
+                } else {
+                    false
+                }
+            })
+            .count();
+        let available = self.inventory.get(tile).copied().unwrap_or(0);
+        available > queued
+    }
+
     pub fn place_tile(&mut self, target: vec2<ICoord>, tile: TileKind) -> bool {
         log::debug!("place tile at {}: {:?}", target, tile);
         if self.grid.get_tile(target).is_some() || !self.inventory.iter().any(|(t, _)| *t == tile) {
@@ -47,6 +64,20 @@ impl Model {
             .play(&self.context.assets.sounds.drone_confirm);
 
         true
+    }
+
+    pub fn can_buy_tile(&self, tile: &TileKind) -> bool {
+        let queued_cost: Money = self
+            .all_actions()
+            .filter_map(|target| {
+                if let DroneTarget::BuyTile(_, kind) = target {
+                    Some(self.config.get_cost(kind))
+                } else {
+                    None
+                }
+            })
+            .sum();
+        self.money > queued_cost + self.config.get_cost(tile)
     }
 
     pub fn buy_tile(&mut self, target: vec2<ICoord>, tile: TileKind) -> bool {
