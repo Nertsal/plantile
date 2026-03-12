@@ -191,7 +191,7 @@ impl Model {
 
 pub fn can_grow_into(pos: vec2<ICoord>, grid: &Grid) -> bool {
     match grid.get_tile(pos) {
-        Some(tile) => matches!(tile.tile.kind, TileKind::Wire(_) | TileKind::Pipe(_)),
+        Some(tile) => matches!(tile.tile.kind, TileKind::Wire(_)),
         None => true,
     }
 }
