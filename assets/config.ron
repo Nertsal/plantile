@@ -157,13 +157,13 @@ Config(
             tile: Seed(TypeD),
         ),
         (
-            price: 3000,
-            unlocked_at: 5000,
+            price: 1500,
+            unlocked_at: 1500,
             tile: Power,
         ),
         (
-            price: 1000,
-            unlocked_at: 1000,
+            price: 600,
+            unlocked_at: 600,
             tile: Sprinkler(false),
         ),
     ],
