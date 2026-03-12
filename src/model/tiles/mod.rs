@@ -289,26 +289,26 @@ impl TileKind {
             },
             TileKind::Light(_) => "Plants grow within range\nRequires Power to function",
             TileKind::Soil(state) => match state {
-                SoilState::Dry => "Consumes adjacent water and turns into soil",
+                SoilState::Dry => "Consumes adjacent Water and turns into soil",
                 SoilState::Watered => {
-                    "Consumes poop nearby and turns into rich soil\nTurns into dry soil after plant growth"
+                    "Consumes Poop nearby and turns into Rich Soil\nTurns into Dry Soil after plant growth"
                 }
-                SoilState::Rich => "Turns into dry soil after plant growth",
+                SoilState::Rich => "Turns into Dry Soil after plant growth",
             },
             TileKind::Water(_) => "Spawns around leaves\nDisappears overtime",
-            TileKind::Bug(_) => "Eats Plants and produces Poop\nSpawned in unlit areas",
-            TileKind::Poop(_) => "Can be used to nourish the soil\nDisappears overtime",
-            TileKind::Power => "Provides power to tiles connected with wires",
+            TileKind::Bug(_) => "Eats Plants and produces Poop\nSpawns in unlit areas",
+            TileKind::Poop(_) => "Can be used to nourish the Soil\nDisappears overtime",
+            TileKind::Power => "Provides power to tiles connected with Wires",
             TileKind::Wire(_) => {
-                "Connection between power and light\nCan be destroyed by bugs and plants"
+                "Connection between Power and Light\nCan be destroyed by Bugs and Plants"
             }
             TileKind::Drainer => {
                 "Collects Water within range to your inventory or to connected Sprinklers"
             }
             TileKind::Cutter(_) => "Automatically cuts adjacent Plants\nRequires Power",
-            TileKind::Pipe(_) => "Connection between water collector and sprinkler",
+            TileKind::Pipe(_) => "Connection between water collector and Sprinkler",
             TileKind::Sprinkler(_) => {
-                "Ejects water on adjacent tiles when connected to a drainer with pipes"
+                "Ejects Water on adjacent tiles when connected to a Drainer via Pipes"
             }
             TileKind::Rock => "Blocks plants growth and bugs",
         }
