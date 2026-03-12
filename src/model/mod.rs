@@ -516,7 +516,7 @@ impl TileKind {
                     .copied()
                     .fold(R32::ZERO, R32::add);
                 let config = config.plants.get(&seed.kind)?;
-                Some(seed_energy / config.growth_capacity)
+                Some(seed_energy.floor() / config.growth_capacity)
             }
             _ => None,
         }
