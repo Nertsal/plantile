@@ -1,6 +1,11 @@
 use super::*;
 
 impl Model {
+    // All queued and active drone actions.
+    pub fn all_actions(&self) -> impl Iterator<Item = &DroneTarget> {
+        itertools::chain![&self.drone.target, &self.queued_actions]
+    }
+
     pub fn update_drone(&mut self, delta_time: Time) {
         // Update drone target
         if self.drone.target.is_none() {
@@ -136,16 +141,12 @@ impl Model {
                     self.drone.action_progress = R32::ZERO;
                     self.drone.target = None;
                     if self.grid.get_tile(position).is_none()
-                        && let Some((inv_item_idx, (_, count))) = self
-                            .inventory
-                            .iter_mut()
-                            .enumerate()
-                            .find(|(_, (t, _))| *t == tile)
+                        && let Some(count) = self.inventory.get_mut(&tile)
                     {
                         if *count > 1 {
                             *count -= 1;
                         } else {
-                            self.inventory.remove(inv_item_idx);
+                            self.inventory.remove(&tile);
                         }
                         self.grid.set_tile(position, Tile::new(tile.clone()));
                     }

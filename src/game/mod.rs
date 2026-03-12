@@ -81,12 +81,39 @@ impl GameState {
                     self.model.interact_with(target);
                 }
                 InputState::PlaceTile(tile) => {
-                    if self.model.place_tile(target, tile.clone()) {
+                    self.model.place_tile(target, tile.clone());
+                    let queued = self
+                        .model
+                        .all_actions()
+                        .filter(|target| {
+                            if let DroneTarget::PlaceTile(_, kind) = target
+                                && kind == tile
+                            {
+                                true
+                            } else {
+                                false
+                            }
+                        })
+                        .count();
+                    let available = self.model.inventory.get(tile).copied().unwrap_or(0);
+                    if available <= queued {
                         self.input_state = InputState::Idle;
                     }
                 }
                 InputState::BuyTile(tile) => {
-                    if self.model.buy_tile(target, tile.clone()) {
+                    self.model.buy_tile(target, tile.clone());
+                    let queued_cost: Money = self
+                        .model
+                        .all_actions()
+                        .filter_map(|target| {
+                            if let DroneTarget::BuyTile(_, kind) = target {
+                                Some(self.model.config.get_cost(kind))
+                            } else {
+                                None
+                            }
+                        })
+                        .sum();
+                    if self.model.money <= queued_cost + self.model.config.get_cost(tile) {
                         self.input_state = InputState::Idle;
                     }
                 }

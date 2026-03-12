@@ -29,7 +29,7 @@ pub struct Model {
     pub money: Money,
     pub drone: Drone,
     pub queued_actions: VecDeque<DroneTarget>,
-    pub inventory: Vec<(TileKind, usize)>,
+    pub inventory: LinearMap<TileKind, usize>,
 }
 
 impl Model {
@@ -57,7 +57,9 @@ impl Model {
                 action_progress: R32::ZERO,
             },
             queued_actions: VecDeque::new(),
-            inventory: vec![(TileKind::Seed(Seed::new(PlantKind::TypeA)), 1)],
+            inventory: [(TileKind::Seed(Seed::new(PlantKind::TypeA)), 1)]
+                .into_iter()
+                .collect(),
 
             config,
             context,

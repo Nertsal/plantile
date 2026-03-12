@@ -100,9 +100,6 @@ impl Model {
     }
 
     pub fn inventory_add(&mut self, tile: TileKind, count: usize) {
-        match self.inventory.iter_mut().find(|(t, _)| *t == tile) {
-            Some((_, available)) => *available += count,
-            None => self.inventory.push((tile, count)),
-        }
+        *self.inventory.entry(tile).or_insert(0) += count;
     }
 }
