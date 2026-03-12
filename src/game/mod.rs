@@ -141,13 +141,19 @@ impl geng::State for GameState {
         self.model.update(delta_time);
 
         // UI events
-        for (widget, (tile, _)) in self.ui.inventory_items.iter().zip(&self.model.inventory) {
+        for (widget, (tile, _)) in self
+            .ui
+            .inventory_items
+            .iter_mut()
+            .zip(&self.model.inventory)
+        {
             if widget.mouse_left.clicked && self.model.can_place_tile(tile) {
                 self.input_state = InputState::PlaceTile(tile.clone());
+                widget.hovered_time = Some(0.0);
                 break;
             }
         }
-        for (widget, tile) in &self.ui.shop_items {
+        for (widget, tile) in &mut self.ui.shop_items {
             let unlock_cost = self
                 .model
                 .config
@@ -164,9 +170,11 @@ impl geng::State for GameState {
                     if self.model.money >= unlock {
                         self.model.money -= unlock;
                         self.model.unlocked_shop.push(tile.clone());
+                        widget.hovered_time = Some(0.0);
                     }
                 } else if self.model.can_buy_tile(tile) {
                     self.input_state = InputState::BuyTile(tile.clone());
+                    widget.hovered_time = Some(0.0);
                 }
                 break;
             }

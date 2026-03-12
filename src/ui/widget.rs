@@ -12,6 +12,7 @@ pub struct WidgetState {
     /// Whether to show the widget.
     pub visible: bool,
     pub hovered: bool,
+    pub hovered_time: Option<f32>,
     pub mouse_left: WidgetMouseState,
     pub mouse_right: WidgetMouseState,
     pub sfx_config: WidgetSfxConfig,
@@ -82,6 +83,15 @@ impl WidgetState {
             self.mouse_left = WidgetMouseState::default();
             self.mouse_right = WidgetMouseState::default();
         }
+        if self.hovered {
+            if let Some(time) = &mut self.hovered_time {
+                *time += context.delta_time;
+            } else {
+                self.hovered_time = Some(0.0);
+            }
+        } else {
+            self.hovered_time = None;
+        }
     }
 
     pub fn show(&mut self) {
@@ -91,6 +101,7 @@ impl WidgetState {
     pub fn hide(&mut self) {
         self.visible = false;
         self.hovered = false;
+        self.hovered_time = None;
         self.mouse_left = WidgetMouseState::default();
         self.mouse_right = WidgetMouseState::default();
     }
@@ -103,6 +114,7 @@ impl Default for WidgetState {
             position: Aabb2::ZERO.extend_uniform(1.0),
             visible: true,
             hovered: false,
+            hovered_time: None,
             mouse_left: WidgetMouseState::default(),
             mouse_right: WidgetMouseState::default(),
             sfx_config: WidgetSfxConfig::default(),

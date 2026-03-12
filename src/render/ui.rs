@@ -28,6 +28,25 @@ impl UiRender {
         pixel_scale: f32,
         framebuffer: &mut ugli::Framebuffer,
     ) {
+        self.draw_texture_with(
+            quad,
+            texture,
+            color,
+            pixel_scale,
+            mat3::identity(),
+            framebuffer,
+        )
+    }
+
+    pub fn draw_texture_with(
+        &self,
+        quad: Aabb2<f32>,
+        texture: &ugli::Texture,
+        color: Color,
+        pixel_scale: f32,
+        transform: mat3<f32>,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
         let pos = geng_utils::pixel::pixel_perfect_aabb(
             quad.center(),
             vec2(0.5, 0.5),
@@ -36,12 +55,15 @@ impl UiRender {
             &geng::PixelPerfectCamera,
             framebuffer.size().as_f32(),
         );
-        self.context.geng.draw2d().textured_quad(
+        self.context.geng.draw2d().draw2d(
             framebuffer,
             &geng::PixelPerfectCamera,
-            pos,
-            texture,
-            color,
+            &draw2d::TexturedQuad::colored(
+                Aabb2::ZERO.extend_symmetric(pos.size() / 2.0),
+                texture,
+                color,
+            )
+            .transform(mat3::translate(pos.center()) * transform),
         );
     }
 

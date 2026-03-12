@@ -16,6 +16,7 @@ const QUEUED_ALPHA: f32 = 0.75;
 const HOVER_ALPHA: f32 = 0.5;
 const SHOP_TILE_LOCKED: f32 = 0.3;
 const SHOP_TILE_TOO_EXPENSIVE: f32 = 0.5;
+const HOVER_ANIMATION_TIME: f32 = 0.5;
 
 pub struct GameRender {
     pub context: Context,
@@ -52,13 +53,26 @@ impl GameRender {
 
         if let Some(selected) = cursor.grid_pos
             && model.grid.get_tile(selected).is_some()
-            && !self.hover_animation.iter().any(|(p, _)| *p == selected)
         {
-            self.hover_animation.push((selected, Time::ZERO));
+            let push = match self
+                .hover_animation
+                .iter()
+                .position(|(p, _)| *p == selected)
+            {
+                Some(i) if i + 1 < self.hover_animation.len() => {
+                    self.hover_animation.remove(i);
+                    true
+                }
+                Some(_) => false,
+                None => true,
+            };
+            if push {
+                self.hover_animation.push((selected, Time::ZERO));
+                self.context.sfx.play(&assets.sounds.ui_hover);
+            }
         }
-        let animation_time = r32(0.5);
         for (_, time) in &mut self.hover_animation {
-            *time += delta_time / animation_time;
+            *time += delta_time / r32(HOVER_ANIMATION_TIME);
             *time = (*time).clamp(Time::ZERO, Time::ONE);
         }
         self.hover_animation
@@ -177,10 +191,8 @@ impl GameRender {
                     if let Some((_, t)) = self.hover_animation.iter().find(|(p, _)| *p == pos) {
                         // Hover animation
                         let t = t.as_f32();
-                        let t = 1.0 - crate::util::ease_out_elastic_with(t, 3.0, 1.0);
-                        let stretch = 1.0 + 0.3 * t;
-                        let squish = 1.0 - 0.3 * t;
-                        transform *= mat3::scale(vec2(squish, stretch));
+                        let scale = hover_animation(t);
+                        transform *= mat3::scale(scale);
                     }
                 }
             }
@@ -479,8 +491,19 @@ impl GameRender {
                 // TODO: placeholder texture
                 continue;
             };
-            self.ui
-                .draw_texture(widget.position, texture, Color::WHITE, 1.0, framebuffer);
+
+            let mut scale = vec2(1.0, 1.0);
+            if let Some(t) = widget.hovered_time {
+                scale = hover_animation(t / HOVER_ANIMATION_TIME);
+            }
+            self.ui.draw_texture_with(
+                widget.position,
+                texture,
+                Color::WHITE,
+                1.0,
+                mat3::scale(scale),
+                framebuffer,
+            );
 
             // Count
             let pos = widget.position.align_pos(vec2(0.5, 1.0)) + vec2(0.0, 3.0) * pixel_scale;
@@ -531,8 +554,19 @@ impl GameRender {
                 1.0
             };
             let color = Color::new(m, m, m, 1.0);
-            self.ui
-                .draw_texture(widget.position, texture, color, 1.0, framebuffer);
+
+            let mut scale = vec2(1.0, 1.0);
+            if let Some(t) = widget.hovered_time {
+                scale = hover_animation(t / HOVER_ANIMATION_TIME);
+            }
+            self.ui.draw_texture_with(
+                widget.position,
+                texture,
+                color,
+                1.0,
+                mat3::scale(scale),
+                framebuffer,
+            );
 
             // Cost
             let (cost, pos) = match unlock_cost {
@@ -670,6 +704,14 @@ impl GameRender {
             );
         }
     }
+}
+
+fn hover_animation(t: f32) -> vec2<f32> {
+    let t = t.clamp(0.0, 1.0);
+    let t = 1.0 - crate::util::ease_out_elastic_with(t, 3.0, 1.0);
+    let stretch = 1.0 + 0.3 * t;
+    let squish = 1.0 - 0.3 * t;
+    vec2(squish, stretch)
 }
 
 fn movement_animation(grid: &GridVisual, timer: &Lifetime, delta: vec2<ICoord>) -> vec2<f32> {
