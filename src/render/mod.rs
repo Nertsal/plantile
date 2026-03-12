@@ -44,7 +44,7 @@ impl GameRender {
         framebuffer: &mut ugli::Framebuffer,
         delta_time: Time,
     ) {
-        let assets = &self.context.assets;
+        let assets = self.context.assets.clone();
         let sprites = &assets.sprites;
         let palette = &assets.palette;
 
@@ -344,60 +344,6 @@ impl GameRender {
             }
         };
 
-        let tile_description = |pos: vec2<ICoord>, framebuffer: &mut ugli::Framebuffer<'_>| {
-            let Some(tile) = model.grid.get_tile(pos) else {
-                return;
-            };
-            if let TileKind::GhostBlock(_) = tile.tile.kind {
-                return;
-            }
-            let text = format!(
-                "{}\n-----\n{}",
-                tile.tile.kind.name(),
-                tile.tile.kind.description()
-            );
-
-            let width = 6.0;
-            let font_size = 0.5;
-            let lines = crate::util::wrap_text(
-                &self.context.assets.fonts.aseprite,
-                &text,
-                width / font_size,
-            );
-
-            let height = font_size * 0.75 + font_size * lines.len() as f32;
-
-            let pos = model.grid_visual.tile_bounds(pos).as_f32();
-            let pos = Aabb2::point(pos.align_pos(vec2(0.0, 0.0)))
-                .extend_right(width)
-                .extend_down(height);
-            self.util.draw_nine_slice(
-                pos,
-                Color::new(1.0, 1.0, 1.0, 0.8),
-                &sprites.ui_window,
-                pixel_scale,
-                &model.camera,
-                framebuffer,
-            );
-
-            let pos = pos.extend_uniform(-0.1);
-            let row = pos.align_aabb(vec2(pos.width(), font_size), vec2(0.5, 1.0));
-            let rows = row.stack(vec2(0.0, -row.height()), lines.len());
-
-            for (line, position) in lines.into_iter().zip(rows) {
-                self.util.draw_text(
-                    line,
-                    position.align_pos(vec2(0.0, 0.5)),
-                    &self.context.assets.fonts.aseprite,
-                    TextRenderOptions::new(font_size)
-                        .color(crate::util::with_alpha(palette.text, 1.0))
-                        .align(vec2(0.0, 0.5)),
-                    &model.camera,
-                    framebuffer,
-                );
-            }
-        };
-
         // Drone and Queued actions
         for (target, alpha) in itertools::chain![
             model.drone.target.as_ref().map(|target| (target, 1.0)),
@@ -450,7 +396,23 @@ impl GameRender {
                         Color::new(0.7, 0.7, 0.7, 0.5)
                     };
                     tile_highlight(target, color, framebuffer);
-                    tile_description(target, framebuffer);
+                    if let Some(tile) = model.grid.get_tile(target) {
+                        let pos = model
+                            .grid_visual
+                            .tile_bounds(target)
+                            .as_f32()
+                            .align_pos(vec2(0.0, 0.0));
+                        self.tile_description(
+                            pos,
+                            6.0,
+                            0.5,
+                            &tile.tile.kind,
+                            false,
+                            pixel_scale,
+                            &model.camera,
+                            framebuffer,
+                        );
+                    }
                 }
                 InputState::PlaceTile(tile) | InputState::BuyTile(tile) => {
                     ghost_tile(target, tile, Color::new(0.7, 0.7, 0.7, 0.5), framebuffer);
@@ -494,8 +456,9 @@ impl GameRender {
     }
 
     pub fn draw_ui(&mut self, ui: &GameUI, model: &Model, framebuffer: &mut ugli::Framebuffer) {
-        let sprites = &self.context.assets.sprites;
-        let palette = &self.context.assets.palette;
+        let assets = self.context.assets.clone();
+        let sprites = &assets.sprites;
+        let palette = &assets.palette;
 
         let pixel_scale = get_pixel_scale(framebuffer.size());
         let font_size = 12.0 * pixel_scale;
@@ -611,6 +574,101 @@ impl GameRender {
             &geng::PixelPerfectCamera,
             framebuffer,
         );
+
+        // Hovered tile description
+        for (widget, tile) in &ui.shop_items {
+            if widget.hovered {
+                self.tile_description(
+                    widget.position.bottom_left(),
+                    5.0 * pixel_scale * TILE_SIZE_PIXELS.y as f32,
+                    0.4 * pixel_scale * TILE_SIZE_PIXELS.y as f32,
+                    tile,
+                    true,
+                    pixel_scale,
+                    &geng::PixelPerfectCamera,
+                    framebuffer,
+                );
+            }
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn tile_description(
+        &mut self,
+        pos: vec2<f32>,
+        width: f32,
+        font_size: f32,
+        tile: &TileKind,
+        clamp_screen: bool,
+        pixel_scale: f32,
+        camera: &impl geng::AbstractCamera2d,
+        framebuffer: &mut ugli::Framebuffer<'_>,
+    ) {
+        let assets = &self.context.assets;
+
+        if let TileKind::GhostBlock(_) = tile {
+            return;
+        }
+        let text = format!("{}\n-----\n{}", tile.name(), tile.description());
+
+        let lines = crate::util::wrap_text(
+            &self.context.assets.fonts.aseprite,
+            &text,
+            width / font_size,
+        );
+
+        let height = font_size * 0.75 + font_size * lines.len() as f32;
+
+        let mut pos = Aabb2::point(pos).extend_right(width).extend_down(height);
+
+        if clamp_screen {
+            // Clamp by screen bounds
+            let screen_margin = pixel_scale * 5.0;
+            let screen = Aabb2::ZERO
+                .extend_positive(framebuffer.size().as_f32())
+                .extend_uniform(-screen_margin);
+            let screen_pos = pos.map_bounds(|pos| {
+                match camera.world_to_screen(framebuffer.size().as_f32(), pos) {
+                    Ok(p) | Err(p) => p,
+                }
+            });
+            let mut offset = vec2::ZERO;
+            if screen_pos.max.x > screen.max.x {
+                offset.x = screen.max.x - screen_pos.max.x;
+            }
+            if screen_pos.min.y < screen.min.y {
+                offset.y = screen_pos.min.y - screen.min.y;
+            }
+            let target =
+                camera.screen_to_world(framebuffer.size().as_f32(), screen_pos.center() + offset);
+            pos = pos.translate(target - pos.center());
+        }
+
+        self.util.draw_nine_slice(
+            pos,
+            Color::new(1.0, 1.0, 1.0, 0.8),
+            &assets.sprites.ui_window,
+            pixel_scale,
+            camera,
+            framebuffer,
+        );
+
+        let pos = pos.extend_uniform(-3.0 * pixel_scale);
+        let row = pos.align_aabb(vec2(pos.width(), font_size), vec2(0.5, 1.0));
+        let rows = row.stack(vec2(0.0, -row.height()), lines.len());
+
+        for (line, position) in lines.into_iter().zip(rows) {
+            self.util.draw_text(
+                line,
+                position.align_pos(vec2(0.0, 0.5)),
+                &self.context.assets.fonts.aseprite,
+                TextRenderOptions::new(font_size)
+                    .color(crate::util::with_alpha(assets.palette.text, 1.0))
+                    .align(vec2(0.0, 0.5)),
+                camera,
+                framebuffer,
+            );
+        }
     }
 }
 
