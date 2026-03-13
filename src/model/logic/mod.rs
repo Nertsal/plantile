@@ -582,30 +582,37 @@ impl Model {
         }
 
         // Water
-        let chance = self.config.water_frequency * delta_time;
-        if rng.gen_bool(chance.as_f32().into()) {
-            // attempt to spawn
-            let anchors = self.grid.all_positions().filter(|pos| {
-                self.grid.get_tile(*pos).is_some_and(|tile| {
-                    if let TileKind::Leaf(leaf) = &tile.tile.kind {
-                        leaf.growth_timer.is_some()
-                    } else {
-                        false
-                    }
+        {
+            let anchors: Vec<_> = self
+                .grid
+                .all_positions()
+                .filter(|pos| {
+                    self.grid.get_tile(*pos).is_some_and(|tile| {
+                        if let TileKind::Leaf(leaf) = &tile.tile.kind {
+                            leaf.growth_timer.is_some()
+                        } else {
+                            false
+                        }
+                    })
                 })
-            });
-            let range = 2;
-            let candidates = anchors
-                .flat_map(|pos| {
-                    (-range..=range)
-                        .flat_map(move |dx| (-range..=range).map(move |dy| pos + vec2(dx, dy)))
-                })
-                .filter(|&pos| self.grid.in_bounds(pos) && self.grid.get_tile(pos).is_none());
-            if let Some(target) = candidates.choose(&mut rng) {
-                self.grid.set_tile(
-                    target,
-                    Tile::new(TileKind::Water(Lifetime::new(self.config.water_lifetime))),
-                );
+                .collect();
+            let chance = (self.config.water_frequency * delta_time).as_f32() * anchors.len() as f32;
+            if rng.gen_bool(chance.clamp(0.0, 1.0).into()) {
+                // attempt to spawn
+                let range = 2;
+                let candidates = anchors
+                    .into_iter()
+                    .flat_map(|pos| {
+                        (-range..=range)
+                            .flat_map(move |dx| (-range..=range).map(move |dy| pos + vec2(dx, dy)))
+                    })
+                    .filter(|&pos| self.grid.in_bounds(pos) && self.grid.get_tile(pos).is_none());
+                if let Some(target) = candidates.choose(&mut rng) {
+                    self.grid.set_tile(
+                        target,
+                        Tile::new(TileKind::Water(Lifetime::new(self.config.water_lifetime))),
+                    );
+                }
             }
         }
 
