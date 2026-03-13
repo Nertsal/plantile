@@ -29,6 +29,7 @@ pub struct Seed {
     pub kind: PlantKind,
     /// How much growth we have of each speed multiplier.
     pub growth_energy: LinearMap<Time, R32>,
+    pub growth_timer: Time,
 }
 
 impl From<PlantKind> for Seed {
@@ -42,6 +43,7 @@ impl Seed {
         Self {
             kind,
             growth_energy: LinearMap::new(),
+            growth_timer: Time::ONE,
         }
     }
 

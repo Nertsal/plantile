@@ -159,16 +159,31 @@ impl Model {
                         .choose(&mut rng)
                 {
                     // Grow into a plant
+                    let growth_time = if self.grid.is_tile_lit(pos, &self.config) {
+                        config.growth_time
+                    } else {
+                        config.growth_time_dark
+                    };
                     if let Some(tile) = self.grid.get_tile_mut(pos)
                         && let TileKind::Seed(seed) = &mut tile.tile.kind
                     {
-                        tile.tile.state.transform();
-                        seed.use_energy(R32::ONE);
+                        seed.growth_timer -= delta_time / growth_time;
+                        seed.growth_timer = seed.growth_timer.clamp(Time::ZERO, Time::ONE);
+                        if seed.growth_timer <= Time::ZERO {
+                            tile.tile.state.transform();
+                            seed.use_energy(R32::ONE);
+                            self.grid.set_tile(
+                                empty,
+                                Tile::new(TileKind::Leaf(
+                                    Leaf::new(plant_kind).connected(pos - empty),
+                                )),
+                            );
+                        }
                     }
-                    self.grid.set_tile(
-                        empty,
-                        Tile::new(TileKind::Leaf(Leaf::new(plant_kind).connected(pos - empty))),
-                    );
+                } else if let Some(tile) = self.grid.get_tile_mut(pos)
+                    && let TileKind::Seed(seed) = &mut tile.tile.kind
+                {
+                    seed.growth_timer = Time::ONE;
                 }
             }
             TileKind::Soil(state) => match state {

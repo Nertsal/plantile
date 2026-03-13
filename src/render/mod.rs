@@ -277,11 +277,28 @@ impl GameRender {
                     pos,
                     palette.progress_background,
                 );
-                let pos = pos.extend_uniform(-pixel_scale).split_left(t);
-                self.context
-                    .geng
-                    .draw2d()
-                    .quad(framebuffer, &model.camera, pos, palette.progress);
+                let progress_pos = pos.extend_uniform(-pixel_scale).split_left(t);
+                self.context.geng.draw2d().quad(
+                    framebuffer,
+                    &model.camera,
+                    progress_pos,
+                    palette.progress,
+                );
+
+                if let TileKind::Seed(seed) = &tile.tile.kind
+                    && seed.growth_timer < Time::ONE
+                {
+                    let t = 1.0 - seed.growth_timer.as_f32();
+                    let progress_pos = pos
+                        .extend_symmetric(-vec2(1.0, 1.0) * pixel_scale)
+                        .split_left(t);
+                    self.context.geng.draw2d().quad(
+                        framebuffer,
+                        &model.camera,
+                        progress_pos,
+                        crate::util::with_alpha(palette.progress.map_rgb(|x| x * 0.8), 0.8),
+                    );
+                }
             }
         }
 
