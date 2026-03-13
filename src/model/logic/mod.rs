@@ -222,11 +222,24 @@ impl Model {
                 }
                 SoilState::Rich => {}
             },
-            TileKind::Water(ref mut lifetime) => {
-                lifetime.change(-delta_time);
-                if lifetime.remaining <= Time::ZERO {
-                    // Evaporate
-                    tile.tile.state.despawn();
+            TileKind::Water(_) => {
+                let sprinkler = self
+                    .grid
+                    .get_neighbors(pos)
+                    .any(|tile| matches!(tile.tile.kind, TileKind::Sprinkler(_)));
+                if let Some(tile) = self.grid.get_tile_mut(pos)
+                    && let TileKind::Water(lifetime) = &mut tile.tile.kind
+                {
+                    if sprinkler {
+                        // Does not evaporate when next to sprinkler
+                        lifetime.remaining = lifetime.max;
+                    } else {
+                        lifetime.change(-delta_time);
+                        if lifetime.remaining <= Time::ZERO {
+                            // Evaporate
+                            tile.tile.state.despawn();
+                        }
+                    }
                 }
             }
             TileKind::Bug(ref mut bug) => {

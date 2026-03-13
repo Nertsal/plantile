@@ -361,7 +361,9 @@ impl TileKind {
                 .growth_timer
                 .map(|t| Time::ONE - t)
                 .filter(|&t| t > Time::ZERO),
-            TileKind::Water(lifetime) | TileKind::Poop(lifetime) => Some(lifetime.ratio()),
+            TileKind::Water(lifetime) | TileKind::Poop(lifetime) => {
+                Some(lifetime.ratio()).filter(|&t| t < R32::ONE)
+            }
             TileKind::Cutter(cutter) => Some(cutter.cooldown.ratio()).filter(|&t| t < R32::ONE),
             TileKind::Bug(bug) => match &bug.state {
                 BugState::Hungry { eating_timer, .. } => {
