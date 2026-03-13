@@ -30,7 +30,7 @@ jobs:
       contents: write
     environment:
       name: main
-      url: https://nertsal.github.io/plant
+      url: https://nertsal.github.io/plantile
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
