@@ -23,7 +23,7 @@ pub struct GameState {
 
     cursor: CursorState,
     input_state: InputState,
-    camera_drag: Option<Drag>,
+    drag: Option<Drag>,
     zoom: SecondOrderState<f32>,
 }
 
@@ -31,6 +31,15 @@ pub struct Drag {
     pub from_world: vec2<FCoord>,
     pub from_screen: vec2<f64>,
     pub from_real_time: Time,
+    pub has_moved: bool,
+    pub target: DragTarget,
+}
+
+pub enum DragTarget {
+    /// Pan camera around.
+    Camera,
+    /// Cancel hovered queued actions.
+    CancelQueued,
 }
 
 pub struct CursorState {
@@ -62,7 +71,7 @@ impl GameState {
                 pressed: None,
             },
             input_state: InputState::Idle,
-            camera_drag: None,
+            drag: None,
             zoom: SecondOrderState::new(3.0, 1.0, 0.0, ZOOM_MAX),
 
             ui_context: UiContext::new(context.clone()),
@@ -117,14 +126,18 @@ impl GameState {
     }
 
     fn cancel(&mut self) {
+        if self.cancel_queued() {
+            return;
+        }
         if !matches!(self.input_state, InputState::Idle) {
             // Stop tile placement
             self.input_state = InputState::Idle;
-            return;
         }
+    }
 
+    fn cancel_queued(&mut self) -> bool {
         let Some(target) = self.cursor.grid_pos else {
-            return;
+            return false;
         };
 
         // Cancel hovered action
@@ -135,6 +148,9 @@ impl GameState {
                     self.model.queued_actions.remove(i);
                 }
             }
+            true
+        } else {
+            false
         }
     }
 }
@@ -154,16 +170,28 @@ impl geng::State for GameState {
             self.zoom.update(delta_time as f32);
             self.model.camera.fov = Camera2dFov::MinSide(15.0 + self.zoom.current);
         }
-        if let Some(drag) = &self.camera_drag {
-            let from = self
-                .model
-                .camera
-                .screen_to_world(self.framebuffer_size.as_f32(), drag.from_screen.as_f32());
-            let to = self.model.camera.screen_to_world(
-                self.framebuffer_size.as_f32(),
-                self.cursor.screen_pos.as_f32(),
-            );
-            self.model.camera.center = drag.from_world.as_f32() + from - to;
+        if let Some(drag) = &mut self.drag {
+            if drag.from_screen != self.cursor.screen_pos {
+                drag.has_moved = true;
+            }
+            match drag.target {
+                DragTarget::Camera => {
+                    let from = self
+                        .model
+                        .camera
+                        .screen_to_world(self.framebuffer_size.as_f32(), drag.from_screen.as_f32());
+                    let to = self.model.camera.screen_to_world(
+                        self.framebuffer_size.as_f32(),
+                        self.cursor.screen_pos.as_f32(),
+                    );
+                    self.model.camera.center = drag.from_world.as_f32() + from - to;
+                }
+                DragTarget::CancelQueued => {
+                    if drag.has_moved {
+                        self.cancel_queued();
+                    }
+                }
+            }
         }
 
         let mut delta_time = Time::new(delta_time as f32);
@@ -253,11 +281,26 @@ impl geng::State for GameState {
             }
             geng::Event::MousePress { button } => match button {
                 geng::MouseButton::Middle | geng::MouseButton::Right => {
-                    self.camera_drag = Some(Drag {
-                        from_world: self.model.camera.center.as_r32(),
-                        from_screen: self.cursor.screen_pos,
-                        from_real_time: self.real_time,
-                    });
+                    if let geng::MouseButton::Right = button
+                        && let Some(grid_pos) = self.cursor.grid_pos
+                        && self.model.active_action_at(grid_pos).is_some()
+                    {
+                        self.drag = Some(Drag {
+                            from_world: self.cursor.world_pos,
+                            from_screen: self.cursor.screen_pos,
+                            from_real_time: self.real_time,
+                            has_moved: false,
+                            target: DragTarget::CancelQueued,
+                        });
+                    } else {
+                        self.drag = Some(Drag {
+                            from_world: self.model.camera.center.as_r32(),
+                            from_screen: self.cursor.screen_pos,
+                            from_real_time: self.real_time,
+                            has_moved: false,
+                            target: DragTarget::Camera,
+                        });
+                    }
                 }
                 geng::MouseButton::Left => {
                     self.cursor.pressed = Some((self.cursor.screen_pos, self.real_time));
@@ -265,11 +308,20 @@ impl geng::State for GameState {
             },
             geng::Event::MouseRelease { button } => {
                 match button {
-                    geng::MouseButton::Right | geng::MouseButton::Middle => {
-                        if let Some(drag) = self.camera_drag.take() // Stop dragging camera
-                    && let geng::MouseButton::Right = button
-                    && (self.cursor.screen_pos - drag.from_screen).len_sqr() < CLICK_MAX_DISTANCE
-                    && (self.real_time - drag.from_real_time).as_f32() < CLICK_MAX_DURATION
+                    geng::MouseButton::Middle => {
+                        // Stop dragging camera
+                        if let Some(drag) = &self.drag
+                            && let DragTarget::Camera = drag.target
+                        {
+                            self.drag = None;
+                        }
+                    }
+                    geng::MouseButton::Right => {
+                        // Stop dragging
+                        if let Some(drag) = self.drag.take()
+                            && (self.cursor.screen_pos - drag.from_screen).len_sqr()
+                                < CLICK_MAX_DISTANCE
+                            && (self.real_time - drag.from_real_time).as_f32() < CLICK_MAX_DURATION
                         {
                             // Short right click - cancel action
                             self.cancel();
