@@ -434,10 +434,16 @@ impl GameRender {
             {
                 offset = movement_animation(&model.grid_visual, timer, *delta);
             }
-            if let Some(tile) = model.grid.get_tile(pos)
-                && !matches!(tile.tile.kind, TileKind::GhostBlock(_))
-            {
-                let name = name.unwrap_or_else(|| model.tile_interaction(pos).name());
+            let name = name.or_else(|| {
+                if let Some(tile) = model.grid.get_tile(pos)
+                    && !matches!(tile.tile.kind, TileKind::GhostBlock(_))
+                {
+                    Some(model.tile_interaction(pos).name())
+                } else {
+                    None
+                }
+            });
+            if let Some(name) = name {
                 tile_highlight_with(name, offset, pos, color, framebuffer);
             }
         };
@@ -462,10 +468,9 @@ impl GameRender {
 
         // Drone and Queued actions
         for (action, alpha) in itertools::chain![
-            model.drone.target.as_ref().map(|target| (target, 1.0)),
+            model.all_drone_actions().map(|target| (target, 1.0)),
             model
-                .queued_actions
-                .iter()
+                .all_queued_actions()
                 .map(|action| (action, QUEUED_ALPHA))
         ] {
             let white = crate::util::with_alpha(Color::WHITE, alpha);

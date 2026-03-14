@@ -50,19 +50,26 @@ impl Model {
         }
     }
 
-    pub fn can_place_tile(&self, tile: &TileKind) -> bool {
-        let queued = self
-            .all_actions()
-            .filter(|target| {
-                if let DroneTarget::PlaceTile(_, kind) = target
-                    && kind == tile
-                {
-                    true
-                } else {
-                    false
-                }
-            })
-            .count();
+    /// If `count_queued` is true, also accounts for the queued actions not yet taken by drones.
+    pub fn can_place_tile(&self, tile: &TileKind, count_queued: bool) -> bool {
+        let mut queued = 0;
+        let mut process = |target: &DroneTarget| {
+            if let DroneTarget::PlaceTile(_, kind) = target
+                && kind == tile
+            {
+                queued += 1;
+            }
+        };
+
+        for target in self.all_drone_actions() {
+            process(target);
+        }
+        if count_queued {
+            for target in self.all_queued_actions() {
+                process(target);
+            }
+        }
+
         let available = self.inventory.get(tile).copied().unwrap_or(0);
         available > queued
     }
@@ -87,18 +94,25 @@ impl Model {
         true
     }
 
-    pub fn can_buy_tile(&self, tile: &TileKind) -> bool {
-        let queued_cost: Money = self
-            .all_actions()
-            .filter_map(|target| {
-                if let DroneTarget::BuyTile(_, kind) = target {
-                    Some(self.config.get_cost(kind))
-                } else {
-                    None
-                }
-            })
-            .sum();
-        self.money > queued_cost + self.config.get_cost(tile)
+    /// If `count_queued` is true, also accounts for the queued actions not yet taken by drones.
+    pub fn can_buy_tile(&self, tile: &TileKind, count_queued: bool) -> bool {
+        let mut queued_cost = 0;
+        let mut process = |target: &DroneTarget| {
+            if let DroneTarget::BuyTile(_, kind) = target {
+                queued_cost += self.config.get_cost(kind);
+            }
+        };
+
+        for target in self.all_drone_actions() {
+            process(target);
+        }
+        if count_queued {
+            for target in self.all_queued_actions() {
+                process(target);
+            }
+        }
+
+        self.money >= queued_cost + self.config.get_cost(tile)
     }
 
     pub fn buy_tile(&mut self, target: vec2<ICoord>, tile: TileKind) -> bool {
@@ -126,16 +140,30 @@ impl Model {
         true
     }
 
+    pub fn can_collect(&self, kind: &TileKind) -> bool {
+        self.inventory.len() < INVENTORY_MAX_SIZE || self.inventory.contains_key(kind)
+    }
+
+    pub fn can_collect_at(&self, target: vec2<ICoord>) -> bool {
+        let Some(tile) = self.grid.get_tile(target) else {
+            return false;
+        };
+        self.can_collect(&tile.tile.kind)
+    }
+
     pub fn collect(&mut self, target: vec2<ICoord>) {
-        if self.inventory.len() >= INVENTORY_MAX_SIZE {
-            // Inventory already maxed
+        let Some(tile) = self.grid.get_tile(target) else {
+            return;
+        };
+        log::debug!("collect {}: {:?}", target, tile.tile);
+
+        if !self.can_collect(&tile.tile.kind) {
             return;
         }
 
         let Some(tile) = self.grid.get_tile_mut(target) else {
             return;
         };
-        log::debug!("collect {}: {:?}", target, tile.tile);
 
         if tile.tile.kind.is_collectable() {
             tile.tile.state.despawn();

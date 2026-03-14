@@ -83,13 +83,13 @@ impl GameState {
                 }
                 InputState::PlaceTile(tile) => {
                     self.model.place_tile(target, tile.clone());
-                    if !self.model.can_place_tile(tile) {
+                    if !self.model.can_place_tile(tile, true) {
                         self.input_state = InputState::Idle;
                     }
                 }
                 InputState::BuyTile(tile) => {
                     self.model.buy_tile(target, tile.clone());
-                    if !self.model.can_buy_tile(tile) {
+                    if !self.model.can_buy_tile(tile, true) {
                         self.input_state = InputState::Idle;
                     }
                 }
@@ -172,7 +172,7 @@ impl geng::State for GameState {
             .iter_mut()
             .zip(&self.model.inventory)
         {
-            if widget.mouse_left.clicked && self.model.can_place_tile(tile) {
+            if widget.mouse_left.clicked && self.model.can_place_tile(tile, true) {
                 self.input_state = InputState::PlaceTile(tile.clone());
                 widget.hovered_time = Some(0.0);
                 break;
@@ -197,7 +197,7 @@ impl geng::State for GameState {
                         self.model.unlocked_shop.push(tile.clone());
                         widget.hovered_time = Some(0.0);
                     }
-                } else if self.model.can_buy_tile(tile) {
+                } else if self.model.can_buy_tile(tile, true) {
                     self.input_state = InputState::BuyTile(tile.clone());
                     widget.hovered_time = Some(0.0);
                 }

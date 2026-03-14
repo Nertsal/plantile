@@ -1,16 +1,88 @@
 use super::*;
 
+impl DroneTarget {
+    /// Whether the action still makes sense.
+    /// For example, trying to collect a water tile that already evaporated is not meaningful.
+    pub fn is_relevant(&self, grid: &Grid) -> bool {
+        match *self {
+            DroneTarget::MoveTo(_) => true,
+            DroneTarget::Collect(pos) => grid.get_tile(pos).is_some_and(|tile| {
+                tile.tile.kind.is_collectable()
+                    && !matches!(tile.tile.state, TileState::Despawning(_))
+            }),
+            DroneTarget::CutPlant(pos) => grid.get_tile(pos).is_some_and(|tile| {
+                matches!(tile.tile.kind, TileKind::Leaf(_) | TileKind::Seed(_))
+                    && !matches!(tile.tile.state, TileState::Despawning(_))
+            }),
+            DroneTarget::PlaceTile(_, _) | DroneTarget::BuyTile(_, _) => true,
+            DroneTarget::KillBug(id) => grid.all_tiles().any(|tile| {
+                if let TileKind::Bug(bug) = &tile.tile.kind
+                    && !matches!(tile.tile.state, TileState::Despawning(_))
+                {
+                    bug.id == id
+                } else {
+                    false
+                }
+            }),
+        }
+    }
+
+    /// Whether the action can be achieved.
+    /// For example collecting tiles at full inventory is not achieveable.
+    /// Includes a check for relevancy inside.
+    pub fn is_achievable(&self, model: &Model) -> bool {
+        if !self.is_relevant(&model.grid) {
+            return false;
+        }
+
+        match self {
+            DroneTarget::MoveTo(_) => true,
+            &DroneTarget::Collect(pos) => model.can_collect_at(pos),
+            &DroneTarget::CutPlant(pos) => model.grid.get_tile(pos).is_none_or(|tile| {
+                matches!(tile.tile.kind, TileKind::Leaf(_))
+                    || (matches!(tile.tile.kind, TileKind::Seed(_))
+                        && model.can_collect(&tile.tile.kind))
+            }),
+            DroneTarget::PlaceTile(_, kind) => model.can_place_tile(kind, false),
+            DroneTarget::BuyTile(_, kind) => model.can_buy_tile(kind, false),
+            DroneTarget::KillBug(_) => true,
+        }
+    }
+}
+
 impl Model {
-    // All queued and active drone actions.
-    pub fn all_actions(&self) -> impl Iterator<Item = &DroneTarget> {
-        itertools::chain![&self.drone.target, &self.queued_actions]
+    // All active drone actions.
+    pub fn all_drone_actions(&self) -> impl Iterator<Item = &DroneTarget> {
+        self.drone.target.as_ref().into_iter()
+    }
+
+    // All queued actions not yet taken by drones.
+    pub fn all_queued_actions(&self) -> impl Iterator<Item = &DroneTarget> {
+        self.queued_actions.iter()
+    }
+
+    pub fn update_action_queue(&mut self) {
+        self.queued_actions
+            .retain(|action| action.is_relevant(&self.grid));
     }
 
     pub fn update_drone(&mut self, delta_time: Time) {
         // Update drone target
-        if self.drone.target.is_none() {
-            // Look for jobs
-            self.drone.target = self.queued_actions.pop_front();
+        // Look for jobs
+        if self
+            .drone
+            .target
+            .as_ref()
+            .is_none_or(|target| !target.is_relevant(&self.grid))
+        {
+            self.drone.target = None;
+            if let Some(i) = self
+                .queued_actions
+                .iter()
+                .position(|action| action.is_achievable(self))
+            {
+                self.drone.target = self.queued_actions.remove(i);
+            }
         }
 
         // Calculate drone's target position

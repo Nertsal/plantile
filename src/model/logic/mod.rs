@@ -6,6 +6,7 @@ use super::*;
 
 impl Model {
     pub fn update(&mut self, delta_time: Time) {
+        self.update_action_queue();
         self.update_drone(delta_time);
 
         // Update tiles
@@ -515,7 +516,7 @@ impl Model {
 
     /// Cut plant from seed or leaf.
     fn cut_plant_tile(&mut self, target: vec2<ICoord>, earn_money: bool) {
-        let Some(tile) = self.grid.get_tile_mut(target) else {
+        let Some(tile) = self.grid.get_tile(target) else {
             return;
         };
         let (plant_kind, leaf_connections) = match &tile.tile.kind {
@@ -524,13 +525,26 @@ impl Model {
             _ => return,
         };
         let config = &self.config.plants[&plant_kind];
-        tile.tile.state.despawn();
-        if leaf_connections.is_some() {
+        let despawn = if leaf_connections.is_some() {
             if earn_money {
                 self.money += config.price;
             }
+            true
         } else {
-            self.inventory_add(TileKind::Seed(Seed::new(plant_kind)), 1);
+            let seed = TileKind::Seed(Seed::new(plant_kind));
+            if self.can_collect(&seed) {
+                self.inventory_add(seed, 1);
+                true
+            } else {
+                false
+            }
+        };
+
+        let Some(tile) = self.grid.get_tile_mut(target) else {
+            return;
+        };
+        if despawn {
+            tile.tile.state.despawn();
         }
 
         let mut lost_plants = Vec::new();
