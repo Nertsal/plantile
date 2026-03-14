@@ -43,8 +43,12 @@ impl DroneTarget {
                     || (matches!(tile.tile.kind, TileKind::Seed(_))
                         && model.can_collect(&tile.tile.kind))
             }),
-            DroneTarget::PlaceTile(_, kind) => model.can_place_tile(kind, false),
-            DroneTarget::BuyTile(_, kind) => model.can_buy_tile(kind, false),
+            DroneTarget::PlaceTile(pos, kind) => {
+                model.can_place_tile(kind, false) && model.grid.get_tile(*pos).is_none()
+            }
+            DroneTarget::BuyTile(pos, kind) => {
+                model.can_buy_tile(kind, false) && model.grid.get_tile(*pos).is_none()
+            }
             DroneTarget::KillBug(_) => true,
         }
     }
