@@ -1,7 +1,7 @@
 use super::*;
 
 impl Model {
-    pub fn interact_with(&mut self, target: vec2<ICoord>) {
+    pub fn interact_with(&mut self, target: vec2<ICoord>, allow_move: bool) {
         if self.active_action_at(target).is_some() {
             // Cannot interact with ghosts
             return;
@@ -11,13 +11,17 @@ impl Model {
         let interaction = self.tile_interaction(target);
         if let DroneTarget::MoveTo(_) = interaction {
             // Tell the closest unoccupied drone to move here
-            if self
-                .drone
-                .target
-                .as_ref()
-                .is_none_or(|target| matches!(target, DroneTarget::MoveTo(_)))
+            if allow_move
+                && self
+                    .drone
+                    .target
+                    .as_ref()
+                    .is_none_or(|target| matches!(target, DroneTarget::MoveTo(_)))
             {
                 self.drone.target = Some(interaction);
+                self.context
+                    .sfx
+                    .play(&self.context.assets.sounds.drone_confirm);
             }
         } else {
             self.queued_actions.push_back(interaction);

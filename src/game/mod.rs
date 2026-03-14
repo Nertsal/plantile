@@ -7,6 +7,9 @@ use crate::{model::*, prelude::*, render::*, ui::context::UiContext, util::Secon
 const ZOOM_MIN: f32 = -5.0;
 const ZOOM_MAX: f32 = 15.0;
 
+const CLICK_MAX_DISTANCE: f64 = 10.0;
+const CLICK_MAX_DURATION: f32 = 0.5;
+
 pub struct GameState {
     context: Context,
     ui_context: UiContext,
@@ -34,6 +37,8 @@ pub struct CursorState {
     pub screen_pos: vec2<f64>,
     pub world_pos: vec2<FCoord>,
     pub grid_pos: Option<vec2<ICoord>>,
+    /// If LMB down, screen position and real time of the initial press.
+    pub pressed: Option<(vec2<f64>, Time)>,
 }
 
 #[derive(Debug)]
@@ -54,6 +59,7 @@ impl GameState {
                 screen_pos: vec2::ZERO,
                 world_pos: vec2::ZERO,
                 grid_pos: None,
+                pressed: None,
             },
             input_state: InputState::Idle,
             camera_drag: None,
@@ -69,6 +75,19 @@ impl GameState {
         game
     }
 
+    fn click(&mut self) {
+        if self.ui.inventory.hovered || self.ui.shop.hovered {
+            // Focus UI first
+            return;
+        }
+
+        if let Some(target) = self.cursor.grid_pos
+            && let InputState::Idle = self.input_state
+        {
+            self.model.interact_with(target, true);
+        }
+    }
+
     /// Called every frame that the LMB is held down.
     fn lmb_down(&mut self) {
         if self.ui.inventory.hovered || self.ui.shop.hovered {
@@ -79,7 +98,7 @@ impl GameState {
         if let Some(target) = self.cursor.grid_pos {
             match &self.input_state {
                 InputState::Idle => {
-                    self.model.interact_with(target);
+                    self.model.interact_with(target, false);
                 }
                 InputState::PlaceTile(tile) => {
                     self.model.place_tile(target, tile.clone());
@@ -232,24 +251,39 @@ impl geng::State for GameState {
                 let grid_pos = self.model.grid_visual.world_to_grid(self.cursor.world_pos);
                 self.cursor.grid_pos = self.model.grid.in_bounds(grid_pos).then_some(grid_pos);
             }
-            geng::Event::MousePress {
-                button: geng::MouseButton::Middle | geng::MouseButton::Right,
-            } => {
-                self.camera_drag = Some(Drag {
-                    from_world: self.model.camera.center.as_r32(),
-                    from_screen: self.cursor.screen_pos,
-                    from_real_time: self.real_time,
-                });
-            }
+            geng::Event::MousePress { button } => match button {
+                geng::MouseButton::Middle | geng::MouseButton::Right => {
+                    self.camera_drag = Some(Drag {
+                        from_world: self.model.camera.center.as_r32(),
+                        from_screen: self.cursor.screen_pos,
+                        from_real_time: self.real_time,
+                    });
+                }
+                geng::MouseButton::Left => {
+                    self.cursor.pressed = Some((self.cursor.screen_pos, self.real_time));
+                }
+            },
             geng::Event::MouseRelease { button } => {
-                if let geng::MouseButton::Right | geng::MouseButton::Middle = button
-                    && let Some(drag) = self.camera_drag.take() // Stop dragging camera
+                match button {
+                    geng::MouseButton::Right | geng::MouseButton::Middle => {
+                        if let Some(drag) = self.camera_drag.take() // Stop dragging camera
                     && let geng::MouseButton::Right = button
-                    && (self.cursor.screen_pos - drag.from_screen).len_sqr() < 5.0
-                    && (self.real_time - drag.from_real_time).as_f32() < 0.5
-                {
-                    // Short right click - cancel action
-                    self.cancel();
+                    && (self.cursor.screen_pos - drag.from_screen).len_sqr() < CLICK_MAX_DISTANCE
+                    && (self.real_time - drag.from_real_time).as_f32() < CLICK_MAX_DURATION
+                        {
+                            // Short right click - cancel action
+                            self.cancel();
+                        }
+                    }
+                    geng::MouseButton::Left => {
+                        if let Some((from_screen, from_real_time)) = self.cursor.pressed
+                            && (self.cursor.screen_pos - from_screen).len_sqr() < CLICK_MAX_DISTANCE
+                            && (self.real_time - from_real_time).as_f32() < CLICK_MAX_DURATION
+                        {
+                            // Short left click
+                            self.click();
+                        }
+                    }
                 }
             }
             _ => {}
