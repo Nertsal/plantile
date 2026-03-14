@@ -59,6 +59,11 @@ impl Model {
         let energy_available = plant_seed.map_or(R32::ZERO, |(_, e)| e);
         let plant_seed = plant_seed.map(|(p, _)| p);
 
+        let has_space_to_grow = self
+            .grid
+            .get_neighbors_all(plant.pos)
+            .any(|tile| tile.tile.is_none());
+
         let_leaf!(let mut plant, leaf);
         leaf.connections = connections;
         leaf.is_growing = false;
@@ -78,7 +83,9 @@ impl Model {
 
         let mut grow = false;
         let mut energy_used = R32::ZERO;
-        if let Some(timer) = &mut leaf.growth_timer {
+        if let Some(timer) = &mut leaf.growth_timer
+            && has_space_to_grow
+        {
             let growth_time = if is_lit {
                 plant_config.growth_time
             } else {
