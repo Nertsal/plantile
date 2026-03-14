@@ -62,6 +62,9 @@ impl Model {
         let Some(tile) = self.grid.get_tile_mut(pos) else {
             return;
         };
+        if !tile.tile.state.interactive() {
+            return;
+        }
         let mut rng = thread_rng();
 
         match tile.tile.kind {
