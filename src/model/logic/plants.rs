@@ -61,6 +61,7 @@ impl Model {
 
         let_leaf!(let mut plant, leaf);
         leaf.connections = connections;
+        leaf.is_growing = false;
 
         if plant_size >= plant_config.max_size {
             // Over max size
@@ -84,6 +85,9 @@ impl Model {
                 plant_config.growth_time_dark
             };
             energy_used = (delta_time / growth_time).min(energy_available);
+            if energy_used > R32::ZERO {
+                leaf.is_growing = true;
+            }
             *timer -= energy_used;
             if *timer <= Time::ZERO {
                 // Attempt to grow

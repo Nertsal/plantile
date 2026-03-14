@@ -71,6 +71,9 @@ impl Seed {
 pub struct Leaf {
     /// Time until the plant attempts to grow.
     pub growth_timer: Option<Time>,
+    /// Whether the leaf is currently growing.
+    /// Could be stuck in a corner, out of resources, or fully grown.
+    pub is_growing: bool,
     pub kind: PlantKind,
     pub connections: Connections,
 }
@@ -79,6 +82,7 @@ impl Leaf {
     pub fn new(kind: PlantKind) -> Self {
         Self {
             growth_timer: Some(R32::ONE),
+            is_growing: true,
             kind,
             connections: Connections::new(),
         }

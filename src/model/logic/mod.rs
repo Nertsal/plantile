@@ -473,7 +473,19 @@ impl Model {
                     .grid
                     .get_neighbors(pos)
                     .filter(|tile| {
-                        matches!(tile.tile.kind, TileKind::Leaf(_)) && tile.tile.state.alive()
+                        matches!(tile.tile.kind, TileKind::Leaf(_))
+                            && tile.tile.state.alive()
+                            && get_whole_plant(&self.grid, tile.pos, &self.config)
+                                .iter()
+                                .all(|&pos| {
+                                    if let Some(tile) = self.grid.get_tile(pos)
+                                        && let TileKind::Leaf(leaf) = &tile.tile.kind
+                                    {
+                                        !leaf.is_growing
+                                    } else {
+                                        true
+                                    }
+                                })
                     })
                     .map(|tile| tile.pos)
                     .collect();
