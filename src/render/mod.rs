@@ -171,7 +171,8 @@ impl GameRender {
                 if Some(tile.tile.kind.name()) == highlighted_tile.map(|(tile, _)| tile.name())
                     && let Some(range) = tile.tile.kind.action_range(&model.config)
                 {
-                    Some((tile.pos, range, OTHER_RANGE_HIGHLIGHT))
+                    let powered = tile.tile.kind.is_powered().is_none_or(|p| p);
+                    powered.then_some((tile.pos, range, OTHER_RANGE_HIGHLIGHT))
                 } else {
                     None
                 }
@@ -219,13 +220,7 @@ impl GameRender {
                 continue;
             };
             let mut mult = match tile.tile.kind {
-                TileKind::Light(connected)
-                | TileKind::Wire(connected)
-                | TileKind::Cutter(Cutter {
-                    powered: connected, ..
-                })
-                | TileKind::Pipe(connected)
-                | TileKind::Sprinkler(connected) => {
+                TileKind::Pipe(connected) | TileKind::Sprinkler(connected) => {
                     if connected {
                         1.0
                     } else {
@@ -237,7 +232,13 @@ impl GameRender {
                 {
                     0.5
                 }
-                _ => 1.0,
+                _ => {
+                    if let Some(false) = tile.tile.kind.is_powered() {
+                        0.5
+                    } else {
+                        1.0
+                    }
+                }
             };
 
             let mut transform = mat3::identity();

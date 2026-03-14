@@ -392,6 +392,18 @@ impl TileKind {
         }
     }
 
+    /// `None` if tile does not need power.
+    /// `Some(true)` if tile is powered.
+    /// `Some(false)` if tile is disconnected from power.
+    pub fn is_powered(&self) -> Option<bool> {
+        match self {
+            TileKind::Light(powered) => Some(*powered),
+            TileKind::Wire(powered) => Some(*powered),
+            TileKind::Cutter(cutter) => Some(cutter.powered),
+            _ => None,
+        }
+    }
+
     pub fn action_range(&self, config: &Config) -> Option<ICoord> {
         match self {
             TileKind::Light(_) => Some(config.light_radius),
