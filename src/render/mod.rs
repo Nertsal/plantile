@@ -232,7 +232,11 @@ impl GameRender {
                         0.5
                     }
                 }
-                TileKind::Leaf(_) if !model.grid.is_tile_lit(pos, &model.config) => 0.5,
+                TileKind::Leaf(_) | TileKind::Seed(_)
+                    if !model.grid.is_tile_lit(pos, &model.config) =>
+                {
+                    0.5
+                }
                 _ => 1.0,
             };
 
