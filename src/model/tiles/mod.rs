@@ -307,7 +307,7 @@ impl TileKind {
             TileKind::Drainer => {
                 "Collects Water within range to your inventory or to connected Sprinklers"
             }
-            TileKind::Cutter(_) => "Automatically cuts adjacent Plants\nRequires Power",
+            TileKind::Cutter(_) => "Automatically cuts fully grown adjacent Plants\nRequires Power",
             TileKind::Pipe(_) => "Connection between water collector and Sprinkler",
             TileKind::Sprinkler(_) => {
                 "Ejects Water on adjacent tiles when connected to a Drainer via Pipes"
