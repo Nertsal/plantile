@@ -224,17 +224,17 @@ impl GameRender {
                     if connected {
                         1.0
                     } else {
-                        0.5
+                        0.6
                     }
                 }
                 TileKind::Leaf(_) | TileKind::Seed(_)
                     if !model.grid.is_tile_lit(pos, &model.config) =>
                 {
-                    0.5
+                    0.6
                 }
                 _ => {
                     if let Some(false) = tile.tile.kind.is_powered() {
-                        0.5
+                        0.6
                     } else {
                         1.0
                     }
