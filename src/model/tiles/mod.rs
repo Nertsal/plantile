@@ -282,10 +282,10 @@ impl TileKind {
         match self {
             TileKind::GhostBlock(_) => "You are not supposed to see this",
             TileKind::Seed(seed) => match seed.kind {
-                PlantKind::TypeA => "Grows from Dry Soil/ Soil/ Rich Soil",
-                PlantKind::TypeB => "Grows from Soil/ Rich Soil",
-                PlantKind::TypeC => "Grows only from Water",
-                PlantKind::TypeD => "Grows only from Rich Soil",
+                PlantKind::TypeA => "Grows on top of Dry Soil/ Soil/ Rich Soil",
+                PlantKind::TypeB => "Grows on top of Soil/ Rich Soil",
+                PlantKind::TypeC => "Grows only on top of Water",
+                PlantKind::TypeD => "Grows only on top of Rich Soil",
             },
             TileKind::Leaf(leaf) => match leaf.kind {
                 PlantKind::TypeA => "Sells for 3g",
