@@ -832,7 +832,7 @@ pub fn manhattan_distance(a: vec2<ICoord>, b: vec2<ICoord>) -> ICoord {
 
 fn bug_can_move_into(grid: &Grid, pos: vec2<ICoord>) -> bool {
     grid.get_tile(pos)
-        .is_none_or(|tile| matches!(tile.tile.kind, TileKind::Wire(_)))
+        .is_none_or(|tile| matches!(tile.tile.kind, TileKind::Wire(_) | TileKind::Pipe(_)))
 }
 
 fn seed_grow_direction(only_up: bool) -> Vec<vec2<ICoord>> {
