@@ -10,8 +10,9 @@ const ZOOM_MAX: f32 = 15.0;
 const CLICK_MAX_DISTANCE: f64 = 10.0;
 const CLICK_MAX_DURATION: f32 = 0.5;
 
-const FIXED_FPS: f32 = 60.0;
+const FIXED_FPS: f32 = 30.0;
 const FIXED_DELTA_TIME: f32 = FIXED_FPS.recip();
+const MAX_DELTA_TIME: f32 = 0.25;
 
 pub struct GameState {
     context: Context,
@@ -269,11 +270,19 @@ impl geng::State for GameState {
         {
             delta_time *= r32(20.0);
         }
+
         self.model_update_timer -= delta_time.as_f32();
         while self.model_update_timer < 0.0 {
-            self.model.update(r32(FIXED_DELTA_TIME));
+            self.model.fixed_update(r32(FIXED_DELTA_TIME));
             self.model_update_timer += FIXED_DELTA_TIME;
         }
+
+        let mut model_delta_time = delta_time;
+        while model_delta_time.as_f32() > MAX_DELTA_TIME {
+            self.model.update(r32(MAX_DELTA_TIME));
+            model_delta_time -= r32(MAX_DELTA_TIME);
+        }
+        self.model.update(delta_time);
 
         // UI events
         for (widget, (tile, _)) in self

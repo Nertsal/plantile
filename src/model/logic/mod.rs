@@ -6,6 +6,10 @@ use super::*;
 
 impl Model {
     pub fn update(&mut self, delta_time: Time) {
+        self.update_drone_position(delta_time);
+    }
+
+    pub fn fixed_update(&mut self, delta_time: Time) {
         self.update_action_queue();
         self.update_drone(delta_time);
 
