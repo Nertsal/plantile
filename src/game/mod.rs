@@ -269,7 +269,6 @@ impl geng::State for GameState {
         {
             delta_time *= r32(20.0);
         }
-        delta_time *= r32(20.0);
         self.model_update_timer -= delta_time.as_f32();
         while self.model_update_timer < 0.0 {
             self.model.update(r32(FIXED_DELTA_TIME));
