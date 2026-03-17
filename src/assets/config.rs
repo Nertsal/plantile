@@ -27,6 +27,7 @@ pub struct Config {
     pub bug_poop_time: Time,
     pub bug_chill_time: Time,
     pub bug_move_time: Time,
+    pub bug_vision_radius: ICoord,
 
     pub light_radius: ICoord,
     pub drainer_radius: ICoord,

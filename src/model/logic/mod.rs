@@ -307,7 +307,8 @@ impl Model {
                             .grid
                             .all_tiles()
                             .filter(|tile| {
-                                if manhattan_distance(pos, tile.pos) <= 7
+                                if manhattan_distance(pos, tile.pos)
+                                    <= self.config.bug_vision_radius
                                     && tile.tile.state.interactive()
                                     && let TileKind::Leaf(_) = &tile.tile.kind
                                 {
