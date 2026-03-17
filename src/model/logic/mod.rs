@@ -275,7 +275,7 @@ impl Model {
                         vec2(0, delta.y.signum())
                     };
 
-                    if bug_can_move_into(grid, tile.pos + dir)
+                    if bug_can_move_into_pos(grid, tile.pos + dir)
                         && let Some(tile) = grid.get_tile_mut(pos)
                         && let TileKind::Bug(bug) = &mut tile.tile.kind
                     {
@@ -356,7 +356,7 @@ impl Model {
                             if let Some(target) = self
                                 .grid
                                 .get_neighbors_all(pos)
-                                .filter(|tile| bug_can_move_into(&self.grid, tile.pos))
+                                .filter(|tile| bug_can_move_into_pos(&self.grid, tile.pos))
                                 .map(|tile| tile.pos)
                                 .choose(&mut rng)
                             {
@@ -402,7 +402,7 @@ impl Model {
                             if let Some(target) = self
                                 .grid
                                 .get_neighbors_all(pos)
-                                .filter(|tile| bug_can_move_into(&self.grid, tile.pos))
+                                .filter(|tile| bug_can_move_into_pos(&self.grid, tile.pos))
                                 .map(|tile| tile.pos)
                                 .choose(&mut rng)
                             {
@@ -749,7 +749,7 @@ impl Grid {
                 self.get_neighbors_all(pos)
                     .filter(|tile| match tile.tile {
                         None => true,
-                        Some(tile) => matches!(tile.kind, TileKind::Wire(_)),
+                        Some(tile) => bug_can_move_into(&tile.kind),
                     })
                     .map(|tile| (tile.pos, 1))
             },
@@ -835,9 +835,13 @@ pub fn manhattan_distance(a: vec2<ICoord>, b: vec2<ICoord>) -> ICoord {
     (a.x - b.x).abs() + (a.y - b.y).abs()
 }
 
-fn bug_can_move_into(grid: &Grid, pos: vec2<ICoord>) -> bool {
+fn bug_can_move_into_pos(grid: &Grid, pos: vec2<ICoord>) -> bool {
     grid.get_tile(pos)
-        .is_none_or(|tile| matches!(tile.tile.kind, TileKind::Wire(_) | TileKind::Pipe(_)))
+        .is_none_or(|tile| bug_can_move_into(&tile.tile.kind))
+}
+
+fn bug_can_move_into(tile: &TileKind) -> bool {
+    matches!(tile, TileKind::Wire(_) | TileKind::Pipe(_))
 }
 
 fn seed_grow_direction(only_up: bool) -> Vec<vec2<ICoord>> {
