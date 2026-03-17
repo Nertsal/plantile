@@ -166,7 +166,7 @@ impl Model {
         let target_distance = (target_pos - self.drone.position).len();
 
         // Action
-        if target_distance.as_f32() < 0.01 {
+        if target_distance - r32(0.01) <= self.config.drone_reach {
             // target within reach
             self.drone_action(delta_time);
         } else {
