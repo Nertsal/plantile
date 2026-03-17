@@ -28,6 +28,7 @@ pub struct Model {
     pub config: Config,
     pub unlocked_shop: Vec<TileKind>,
 
+    pub simulation_time: Time,
     pub next_id: Id,
     /// Actual logic data.
     pub grid: Grid,
@@ -52,6 +53,7 @@ impl Model {
             },
             unlocked_shop: Vec::new(),
 
+            simulation_time: Time::ZERO,
             next_id: 1,
             grid: Grid::new(),
             money: 0,

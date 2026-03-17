@@ -6,7 +6,19 @@ use super::*;
 
 impl Model {
     pub fn update(&mut self, delta_time: Time) {
+        self.simulation_time += delta_time;
         self.update_drone_position(delta_time);
+
+        // Tiles timers
+        let update_order: Vec<vec2<ICoord>> = self
+            .grid
+            .all_tiles()
+            .sorted_by_key(|tile| tile.tile.kind.update_order())
+            .map(|tile| tile.pos)
+            .collect();
+        for &pos in &update_order {
+            self.update_tile_state(pos, delta_time);
+        }
     }
 
     pub fn fixed_update(&mut self, delta_time: Time) {
@@ -20,9 +32,6 @@ impl Model {
             .sorted_by_key(|tile| tile.tile.kind.update_order())
             .map(|tile| tile.pos)
             .collect();
-        for &pos in &update_order {
-            self.update_tile_state(pos, delta_time);
-        }
         for pos in update_order {
             self.tile_logic(pos, delta_time);
         }
@@ -33,6 +42,21 @@ impl Model {
     fn update_tile_state(&mut self, pos: vec2<ICoord>, delta_time: Time) {
         let Some(tile) = self.grid.get_tile_mut(pos) else {
             return;
+        };
+
+        let drone_action = match &self.drone.target {
+            Some(target) if self.drone.action_progress > R32::ZERO => match *target {
+                DroneTarget::Collect(target) | DroneTarget::CutPlant(target) => target == pos,
+                DroneTarget::KillBug(bug_id) => {
+                    if let TileKind::Bug(bug) = &tile.tile.kind {
+                        bug.id == bug_id
+                    } else {
+                        false
+                    }
+                }
+                _ => false,
+            },
+            _ => false,
         };
 
         match &mut tile.tile.state {
@@ -52,11 +76,20 @@ impl Model {
                     self.grid.set_tile(pos + delta, tile.tile);
                 }
             }
-            TileState::Idle => {}
+            TileState::Idle => {
+                if drone_action {
+                    tile.tile.state = TileState::DroneAction;
+                }
+            }
             TileState::Despawning(timer) => {
                 timer.change(-delta_time / self.config.animations.tile_despawn);
                 if timer.remaining <= Time::ZERO {
                     self.grid.remove_tile(pos);
+                }
+            }
+            TileState::DroneAction => {
+                if !drone_action {
+                    tile.tile.state = TileState::Idle;
                 }
             }
         }

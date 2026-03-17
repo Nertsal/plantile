@@ -41,6 +41,7 @@ pub struct GameRender {
     pub active_highlight: (vec2<ICoord>, Time, Time),
     pub place_highlight: Option<(TileKind, Time)>,
     pub hover_animation: Vec<(vec2<ICoord>, Time)>,
+    pub tile_shake: LinearMap<vec2<ICoord>, (vec2<f32>, bool)>,
 }
 
 impl GameRender {
@@ -51,6 +52,7 @@ impl GameRender {
             active_highlight: (vec2::ZERO, Time::ZERO, Time::ZERO),
             place_highlight: None,
             hover_animation: Vec::new(),
+            tile_shake: LinearMap::new(),
             context,
         }
     }
@@ -95,6 +97,9 @@ impl GameRender {
         }
         self.hover_animation
             .retain(|(p, time)| *time < Time::ONE || Some(*p) == cursor.grid_pos);
+        // Update tile shake, if the tile hasnt been shaken in last frame, forget about it
+        self.tile_shake
+            .retain(|_, (_, flag)| std::mem::replace(flag, false));
 
         // Update hovered timing
         if Some(self.active_highlight.0) != cursor.grid_pos {
@@ -242,6 +247,7 @@ impl GameRender {
             };
 
             let mut transform = mat3::identity();
+            let mut shake = false;
             match &tile.tile.state {
                 TileState::Spawning(timer) => {
                     let t = timer.ratio().as_f32();
@@ -279,6 +285,21 @@ impl GameRender {
                         transform *= mat3::scale(scale);
                     }
                 }
+                TileState::DroneAction => {
+                    shake = true;
+                }
+            }
+
+            // Tile shake
+            if shake {
+                let (shake, flag) = self.tile_shake.entry(pos).or_insert((vec2::ZERO, true));
+                *flag = true;
+                let t = model.drone.action_progress.as_f32();
+                *shake = *shake * 0.5
+                    + Angle::from_degrees(thread_rng().gen_range(0.0..=360.0)).unit_vec()
+                        * 0.01
+                        * t;
+                transform *= mat3::translate(*shake);
             }
 
             if highlighted_tiles.contains(&pos) {

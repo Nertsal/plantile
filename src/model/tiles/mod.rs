@@ -186,6 +186,8 @@ pub enum TileState {
         timer: Lifetime,
         delta: vec2<ICoord>,
     },
+    /// A drone is performing an action on this tile.
+    DroneAction,
 }
 
 impl TileState {
