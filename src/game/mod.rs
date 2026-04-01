@@ -4,8 +4,8 @@ pub use self::ui::*;
 
 use crate::{model::*, prelude::*, render::*, ui::context::UiContext, util::SecondOrderState};
 
-const ZOOM_MIN: f32 = -5.0;
-const ZOOM_MAX: f32 = 15.0;
+const ZOOM_MIN: f32 = -10.0;
+const ZOOM_MAX: f32 = 25.0;
 
 const CLICK_MAX_DISTANCE: f64 = 10.0;
 const CLICK_MAX_DURATION: f32 = 0.5;
@@ -26,6 +26,7 @@ pub struct GameState {
     model: Model,
     ui: GameUI,
 
+    hide_ui: bool,
     cursor: CursorState,
     input_state: InputState,
     drag: Option<Drag>,
@@ -72,6 +73,7 @@ impl GameState {
             model: Model::new(context.clone(), context.assets.config.clone()),
             ui: GameUI::new(&context),
 
+            hide_ui: false,
             cursor: CursorState {
                 screen_pos: vec2::ZERO,
                 world_pos: vec2::ZERO,
@@ -342,6 +344,9 @@ impl geng::State for GameState {
             {
                 self.model.money += 10000;
             }
+            geng::Event::KeyPress { key: geng::Key::F1 } => {
+                self.hide_ui = !self.hide_ui;
+            }
             geng::Event::Wheel { delta } => {
                 self.ui_context.cursor.scroll += delta as f32;
             }
@@ -441,10 +446,13 @@ impl geng::State for GameState {
             &self.model,
             &self.cursor,
             &self.input_state,
+            self.hide_ui,
             framebuffer,
             self.delta_time,
         );
-        self.render.draw_ui(&self.ui, &self.model, framebuffer);
+        if !self.hide_ui {
+            self.render.draw_ui(&self.ui, &self.model, framebuffer);
+        }
 
         // Debug
         // self.render.util.draw_text(

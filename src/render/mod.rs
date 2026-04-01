@@ -62,6 +62,7 @@ impl GameRender {
         model: &Model,
         cursor: &CursorState,
         input_state: &InputState,
+        hide_ui: bool,
         framebuffer: &mut ugli::Framebuffer,
         delta_time: Time,
     ) {
@@ -323,7 +324,8 @@ impl GameRender {
                 framebuffer,
             );
 
-            if tile.tile.state.alive()
+            if !hide_ui
+                && tile.tile.state.alive()
                 && let Some(t) = tile.tile.kind.action_progress(&model.config)
             {
                 // Tile action progress
@@ -600,7 +602,7 @@ impl GameRender {
             &model.camera,
             framebuffer,
         );
-        if model.drone.action_progress > R32::ZERO {
+        if !hide_ui && model.drone.action_progress > R32::ZERO {
             // Drone progress
             let t = model.drone.action_progress.as_f32();
             let pos = Aabb2::point(model.drone.position.as_f32() + vec2(0.0, -10.0) * pixel_scale)
