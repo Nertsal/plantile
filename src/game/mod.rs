@@ -21,6 +21,7 @@ pub struct GameState {
     delta_time: Time,
     real_time: Time,
     model_update_timer: f32,
+    focus_ui: bool,
 
     render: GameRender,
     model: Model,
@@ -89,6 +90,7 @@ impl GameState {
             delta_time: Time::new(0.1),
             real_time: Time::ZERO,
             model_update_timer: 0.0,
+            focus_ui: false,
             context,
         };
         game.zoom.target = 0.001; // For better pixels (slight misaligned)
@@ -96,7 +98,7 @@ impl GameState {
     }
 
     fn click(&mut self) {
-        if self.ui.inventory.hovered || self.ui.shop.hovered {
+        if self.focus_ui {
             // Focus UI first
             return;
         }
@@ -174,7 +176,7 @@ impl GameState {
 
     /// Called the first frame that the LMB is pressed down.
     fn lmb_press(&mut self) {
-        if self.ui.inventory.hovered || self.ui.shop.hovered {
+        if self.focus_ui {
             // Focus UI first
             return;
         }
@@ -441,17 +443,25 @@ impl geng::State for GameState {
             &mut self.ui_context,
         );
         self.ui_context.frame_end();
+        self.focus_ui = self.ui.inventory.hovered || self.ui.shop.hovered;
 
         self.render.draw_game(
             &self.model,
             &self.cursor,
             &self.input_state,
             self.hide_ui,
+            self.focus_ui,
             framebuffer,
             self.delta_time,
         );
         if !self.hide_ui {
-            self.render.draw_ui(&self.ui, &self.model, framebuffer);
+            self.render.draw_ui(
+                &self.ui,
+                &self.model,
+                &self.input_state,
+                &self.ui_context,
+                framebuffer,
+            );
         }
 
         // Debug

@@ -7,7 +7,7 @@ use crate::{
     game::{CursorState, GameUI, InputState},
     model::*,
     prelude::*,
-    ui::layout::AreaOps,
+    ui::{context::UiContext, layout::AreaOps},
 };
 
 /// Full size of a single tile in pixels, used for scaling textures to properly fit on the tile.
@@ -57,12 +57,14 @@ impl GameRender {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn draw_game(
         &mut self,
         model: &Model,
         cursor: &CursorState,
         input_state: &InputState,
         hide_ui: bool,
+        focus_ui: bool,
         framebuffer: &mut ugli::Framebuffer,
         delta_time: Time,
     ) {
@@ -573,7 +575,7 @@ impl GameRender {
         }
 
         // Input state
-        if let Some(target) = cursor.grid_pos {
+        if !focus_ui && let Some(target) = cursor.grid_pos {
             let tile_action = |framebuffer: &mut ugli::Framebuffer| {
                 let color = if let Some(tile) = model.grid.get_tile(target)
                     && let TileKind::Bug(_) = tile.tile.kind
@@ -650,7 +652,14 @@ impl GameRender {
         }
     }
 
-    pub fn draw_ui(&mut self, ui: &GameUI, model: &Model, framebuffer: &mut ugli::Framebuffer) {
+    pub fn draw_ui(
+        &mut self,
+        ui: &GameUI,
+        model: &Model,
+        input_state: &InputState,
+        ui_context: &UiContext,
+        framebuffer: &mut ugli::Framebuffer,
+    ) {
         let assets = self.context.assets.clone();
         let sprites = &assets.sprites;
         let palette = &assets.palette;
@@ -806,6 +815,21 @@ impl GameRender {
                     framebuffer,
                 );
             }
+        }
+
+        // Placement ghost
+        if let InputState::PlaceTile(kind) | InputState::BuyTile(kind) = input_state
+            && (ui.inventory.hovered || ui.shop.hovered)
+            && let Some(texture) = sprites.tiles.get_texture(kind)
+        {
+            let color = Color::new(0.7, 0.7, 0.7, HOVER_ALPHA);
+            let size = vec2(28.0, 28.0) * pixel_scale;
+            let quad = Aabb2::point(ui_context.cursor.position).extend_symmetric(size / 2.0);
+            self.context.geng.draw2d().draw2d(
+                framebuffer,
+                &geng::PixelPerfectCamera,
+                &draw2d::TexturedQuad::colored(quad, &**texture, color),
+            );
         }
     }
 
