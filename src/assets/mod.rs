@@ -157,11 +157,22 @@ pub struct Sounds {
     pub ui_click: Rc<geng::Sound>,
     pub ui_hover: Rc<geng::Sound>,
 
+    pub tile_build: Rc<geng::Sound>,
+
+    pub bug_spawn: Rc<geng::Sound>,
+    pub bug_move: Rc<geng::Sound>,
     pub bug_eat: Rc<geng::Sound>,
     pub bug_poop: Rc<geng::Sound>,
+
+    pub water_spawn: Rc<geng::Sound>,
+    pub water_consume: Rc<geng::Sound>,
+    pub water_sprinkle: Rc<geng::Sound>,
+    pub evaporate: Rc<geng::Sound>,
+
     pub drone_confirm: Rc<geng::Sound>,
-    pub grow: Rc<geng::Sound>,
-    pub rock: Rc<geng::Sound>,
+    pub plant_growth: Rc<geng::Sound>,
+    pub collect: Rc<geng::Sound>,
+    pub rock_spawn: Rc<geng::Sound>,
 }
 
 #[derive(geng::asset::Load)]

@@ -17,9 +17,28 @@ pub const INVENTORY_MAX_SIZE: usize = 10;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GameEvent {
+    Sfx(vec2<ICoord>, GameSfx),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum GameSfx {
+    TileBuild,
+    RockSpawn,
+
+    SeedTakeEnergy,
     PlantGrowth,
+    PlantHarvest,
+    WaterSpawn,
+    WaterConsume,
+    WaterSprinkle,
+    WaterEvaporate,
+
+    BugSpawn,
+    BugMove,
     BugEat,
     BugPoop,
+    PoopConsume,
+    PoopDespawn,
 }
 
 pub enum ActionId {

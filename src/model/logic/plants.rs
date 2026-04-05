@@ -173,12 +173,13 @@ impl Model {
             let mut leaf = Leaf::new(kind);
             leaf.connections.set(position - grow, Some(()));
             self.grid.set_tile(grow, Tile::new(TileKind::Leaf(leaf)));
-            self.events.push(GameEvent::PlantGrowth);
+            self.events.push(GameEvent::Sfx(grow, GameSfx::PlantGrowth));
         }
         if let Some(grow) = grow_right {
             let mut leaf = Leaf::new(kind);
             leaf.connections.set(position - grow, Some(()));
             self.grid.set_tile(grow, Tile::new(TileKind::Leaf(leaf)));
+            self.events.push(GameEvent::Sfx(grow, GameSfx::PlantGrowth));
         }
 
         // Connect

@@ -253,20 +253,49 @@ impl GameState {
         let mut sfx = LinearMap::new();
         for event in events {
             match event {
-                GameEvent::PlantGrowth | GameEvent::BugEat | GameEvent::BugPoop => {
-                    sfx.insert(event, ());
+                GameEvent::Sfx(pos, sound) => {
+                    let distance = crate::model::logic::manhattan_distance(
+                        self.model
+                            .grid_visual
+                            .world_to_grid(self.model.camera.center.as_r32()),
+                        pos,
+                    );
+                    let fov = self.model.camera.fov.value();
+                    let max_distance = (fov * 3.0).min(50.0);
+                    let volume = (1.0
+                        - (distance as f32 * self.model.grid_visual.tile_size.y.as_f32()
+                            - fov / 4.0)
+                            / max_distance)
+                        .clamp(0.0, 1.0);
+                    let volume = volume.sqrt();
+                    let v = sfx.entry(sound).or_insert(0.0);
+                    *v = volume.max(*v);
                 }
             }
         }
 
         let sounds = &self.context.assets.sounds;
-        for (sfx, ()) in sfx {
+        for (sfx, volume) in sfx {
             let sfx = match sfx {
-                GameEvent::PlantGrowth => &sounds.grow,
-                GameEvent::BugEat => &sounds.bug_eat,
-                GameEvent::BugPoop => &sounds.bug_poop,
+                GameSfx::TileBuild => &sounds.tile_build,
+                GameSfx::RockSpawn => &sounds.rock_spawn,
+                GameSfx::SeedTakeEnergy => &sounds.water_consume,
+                GameSfx::PlantGrowth => &sounds.plant_growth,
+                GameSfx::PlantHarvest => &sounds.bug_eat,
+
+                GameSfx::WaterSpawn => &sounds.water_spawn,
+                GameSfx::WaterConsume => &sounds.water_consume,
+                GameSfx::WaterSprinkle => &sounds.water_sprinkle,
+                GameSfx::WaterEvaporate => &sounds.evaporate,
+
+                GameSfx::BugSpawn => &sounds.bug_spawn,
+                GameSfx::BugMove => &sounds.bug_move,
+                GameSfx::BugEat => &sounds.bug_eat,
+                GameSfx::BugPoop => &sounds.bug_poop,
+                GameSfx::PoopConsume => &sounds.water_consume,
+                GameSfx::PoopDespawn => &sounds.evaporate,
             };
-            self.context.sfx.play(sfx);
+            self.context.sfx.play_volume(sfx, volume);
         }
     }
 }

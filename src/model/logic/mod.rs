@@ -164,9 +164,12 @@ impl Model {
                         TileKind::Soil(state) => {
                             *state = SoilState::Dry;
                             grow_from.tile.state.transform();
+                            self.events
+                                .push(GameEvent::Sfx(pos, GameSfx::SeedTakeEnergy));
                         }
                         TileKind::Water(_) => {
                             grow_from.tile.state.despawn();
+                            self.events.push(GameEvent::Sfx(pos, GameSfx::WaterConsume));
                         }
                         _ => {}
                     }
@@ -215,6 +218,8 @@ impl Model {
                                     Leaf::new(plant_kind).connected(pos - empty),
                                 )),
                             );
+                            self.events
+                                .push(GameEvent::Sfx(empty, GameSfx::PlantGrowth));
                         }
                     }
                 } else if let Some(tile) = self.grid.get_tile_mut(pos)
@@ -242,6 +247,7 @@ impl Model {
                             *state = SoilState::Watered;
                             soil.tile.state.transform();
                         }
+                        self.events.push(GameEvent::Sfx(pos, GameSfx::WaterConsume));
                     }
                 }
                 SoilState::Watered => {
@@ -259,6 +265,7 @@ impl Model {
                             *state = SoilState::Rich;
                             soil.tile.state.transform();
                         }
+                        self.events.push(GameEvent::Sfx(pos, GameSfx::PoopConsume));
                     }
                 }
                 SoilState::Rich => {}
@@ -279,6 +286,8 @@ impl Model {
                         if lifetime.remaining <= Time::ZERO {
                             // Evaporate
                             tile.tile.state.despawn();
+                            self.events
+                                .push(GameEvent::Sfx(pos, GameSfx::WaterEvaporate));
                         }
                     }
                 }
@@ -296,7 +305,7 @@ impl Model {
                 }
                 let can_move = bug.move_timer <= Time::ZERO;
 
-                let move_towards = |target: vec2<ICoord>, grid: &mut Grid| {
+                let mut move_towards = |target: vec2<ICoord>, grid: &mut Grid| {
                     if !can_move {
                         return;
                     }
@@ -325,6 +334,7 @@ impl Model {
                             pos + dir,
                             Tile::new(TileKind::GhostBlock(ExistentialReason::MoveFrom(pos))),
                         );
+                        self.events.push(GameEvent::Sfx(pos, GameSfx::BugMove));
                     }
                 };
 
@@ -373,7 +383,7 @@ impl Model {
                                         *eating_timer = Lifetime::new(self.config.bug_eat_time);
                                         *hunger -= 1;
                                         self.cut_plant_tile(target, false);
-                                        self.events.push(GameEvent::BugEat);
+                                        self.events.push(GameEvent::Sfx(target, GameSfx::BugEat));
                                     }
                                 }
                             } else {
@@ -412,7 +422,7 @@ impl Model {
                                         self.config.poop_lifetime,
                                     ))),
                                 );
-                                self.events.push(GameEvent::BugPoop);
+                                self.events.push(GameEvent::Sfx(target, GameSfx::BugPoop));
                                 if let Some(bug) = self.grid.get_tile_mut(pos)
                                     && let TileKind::Bug(bug) = &mut bug.tile.kind
                                 {
@@ -449,6 +459,7 @@ impl Model {
                 lifetime.change(-delta_time);
                 if lifetime.remaining <= Time::ZERO {
                     tile.tile.state.despawn();
+                    self.events.push(GameEvent::Sfx(pos, GameSfx::PoopDespawn));
                 }
             }
             TileKind::Drainer => {
@@ -506,6 +517,8 @@ impl Model {
                         if let Some(sprinkler) = self.grid.get_tile_mut(sprinkler_pos) {
                             sprinkler.tile.state.transform()
                         }
+                        self.events
+                            .push(GameEvent::Sfx(target, GameSfx::WaterSprinkle));
                     } else {
                         // Collect water to player inventory
                         self.collect(water, Some(self.grid_visual.tile_center(pos)));
@@ -643,6 +656,11 @@ impl Model {
             }
         }
 
+        if !lost_plants.is_empty() {
+            self.events
+                .push(GameEvent::Sfx(target, GameSfx::PlantHarvest));
+        }
+
         for tile in lost_plants {
             if let Some(tile) = self.grid.get_tile_mut(tile) {
                 tile.tile.state.despawn();
@@ -669,6 +687,7 @@ impl Model {
                 );
                 if self.grid.get_tile(pos).is_none() {
                     self.grid.set_tile(pos, Tile::new(TileKind::Rock));
+                    self.events.push(GameEvent::Sfx(pos, GameSfx::RockSpawn));
                     break;
                 }
             }
@@ -705,6 +724,8 @@ impl Model {
                         target,
                         Tile::new(TileKind::Water(Lifetime::new(self.config.water_lifetime))),
                     );
+                    self.events
+                        .push(GameEvent::Sfx(target, GameSfx::WaterSpawn));
                 }
             }
         }
@@ -740,6 +761,7 @@ impl Model {
                             })),
                         );
                         self.next_id += 1;
+                        self.events.push(GameEvent::Sfx(pos, GameSfx::BugSpawn));
                         break;
                     }
                 }

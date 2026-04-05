@@ -238,6 +238,8 @@ impl Model {
                             self.inventory.remove(&tile);
                         }
                         self.grid.set_tile(position, Tile::new(tile.clone()));
+                        self.events
+                            .push(GameEvent::Sfx(position, GameSfx::TileBuild));
                     }
                 }
             }
@@ -248,6 +250,8 @@ impl Model {
                     if self.grid.get_tile(position).is_none() && self.money >= cost {
                         self.grid.set_tile(position, Tile::new(tile.clone()));
                         self.money -= cost;
+                        self.events
+                            .push(GameEvent::Sfx(position, GameSfx::TileBuild));
                     }
                 }
             }

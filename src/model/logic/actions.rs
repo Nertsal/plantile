@@ -179,7 +179,7 @@ impl Model {
             }
             let kind = tile.tile.kind.clone();
             self.inventory_add(kind, 1);
-            self.context.sfx.play(&self.context.assets.sounds.rock);
+            self.context.sfx.play(&self.context.assets.sounds.collect);
         }
     }
 
