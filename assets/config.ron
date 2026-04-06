@@ -26,6 +26,7 @@ Config(
     bug_poop_time: 3.0,
     bug_chill_time: 10.0,
     bug_move_time: 5.0,
+    bug_vision_radius: 7,
 
     light_radius: 8,
     drainer_radius: 5,
