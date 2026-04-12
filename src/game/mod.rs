@@ -200,17 +200,8 @@ impl GameState {
                 .is_some_and(|tile| !matches!(tile.tile.state, TileState::Despawning { .. }))
             {
                 // Clicked on an active tile
-                if let Some(interaction) = self.model.interact_with(target, false) {
-                    let next_state = if let InputState::Idle = self.input_state
-                        && let DroneTarget::Collect(pos) = interaction
-                        && let Some(tile) = self.model.grid.get_tile(pos)
-                    {
-                        // Ability to immediately replace the tile in a different place
-                        Some(InputState::PlaceTile(tile.tile.kind.clone().normalized()))
-                    } else {
-                        None
-                    };
-                    self.start_drag(DragTarget::Interact, next_state);
+                if self.model.interact_with(target, false).is_some() {
+                    self.start_drag(DragTarget::Interact, None);
                 }
             } else {
                 match &self.input_state {
