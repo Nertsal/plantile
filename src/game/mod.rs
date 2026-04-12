@@ -120,6 +120,21 @@ impl GameState {
         }
     }
 
+    fn middle_click(&mut self, _drag: Option<Drag>) {
+        if self.focus_ui {
+            return;
+        }
+
+        if let Some(target) = self.cursor.grid_pos
+            && let Some(tile) = self.model.grid.get_tile(target)
+        {
+            let kind = tile.tile.kind.clone().normalized();
+            if self.model.can_place_tile(&kind, true) {
+                self.input_state = InputState::PlaceTile(kind);
+            }
+        }
+    }
+
     fn start_drag(&mut self, target: DragTarget, next_state: Option<InputState>) {
         self.drag = Some(Drag {
             from_world: match target {
@@ -467,8 +482,13 @@ impl geng::State for GameState {
                         // Stop dragging camera
                         if let Some(drag) = &self.drag
                             && let DragTarget::Camera = drag.target
+                            && let Some(drag) = self.drag.take()
+                            && (self.cursor.screen_pos - drag.from_screen).len_sqr()
+                                < CLICK_MAX_DISTANCE
+                            && (self.real_time - drag.from_real_time).as_f32() < CLICK_MAX_DURATION
                         {
-                            self.drag = None;
+                            // Short middle click
+                            self.middle_click(Some(drag));
                         }
                     }
                     geng::MouseButton::Right => {
