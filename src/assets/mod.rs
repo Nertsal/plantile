@@ -8,7 +8,6 @@ use crate::{model::*, prelude::Color};
 use std::path::PathBuf;
 
 use geng::prelude::*;
-use geng_utils::gif::GifFrame;
 
 #[derive(geng::asset::Load)]
 pub struct Assets {
@@ -29,34 +28,11 @@ impl Assets {
 
 #[derive(geng::asset::Load)]
 pub struct LoadingAssets {
+    pub palette: Palette,
     #[load(path = "sprites/title.png", options(filter = "ugli::Filter::Nearest"))]
     pub title: ugli::Texture,
     #[load(path = "fonts/default.ttf")]
     pub font: Font,
-    #[load(load_with = "load_gif(&manager, &base_path.join(\"sprites/loading_background.gif\"))")]
-    pub background: Vec<GifFrame>,
-}
-
-fn load_gif(
-    manager: &geng::asset::Manager,
-    path: &std::path::Path,
-) -> geng::asset::Future<Vec<GifFrame>> {
-    let manager = manager.clone();
-    let path = path.to_owned();
-    async move {
-        geng_utils::gif::load_gif(
-            &manager,
-            &path,
-            geng_utils::gif::GifOptions {
-                frame: geng::asset::TextureOptions {
-                    filter: ugli::Filter::Nearest,
-                    ..Default::default()
-                },
-            },
-        )
-        .await
-    }
-    .boxed_local()
 }
 
 #[derive(Debug, Clone, geng::asset::Load, Serialize, Deserialize)]

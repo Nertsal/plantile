@@ -19,6 +19,7 @@ impl<T: 'static> LoadingScreen<T> {
     pub fn new(
         geng: &Geng,
         assets: Rc<LoadingAssets>,
+        skip_intro: bool,
         future: impl Future<Output = T> + 'static,
     ) -> Self {
         // let height = 360;
@@ -30,16 +31,16 @@ impl<T: 'static> LoadingScreen<T> {
             future: Some(Task::new(geng, future)),
             result: None,
 
-            min_load_time: 0.0,
+            min_load_time: if skip_intro { 0.0 } else { 3.4 },
             real_time: 0.0,
             texts: vec![
                 "Loading assets...",
-                "Turning the lights on...",
-                "Initializing evil... >:3",
+                "Planting seeds...",
+                "Spawning bugs...",
                 "Why is this taking so long?",
             ],
             current_text: 0,
-            text_timer: Bounded::new_max(2.0),
+            text_timer: Bounded::new_max(1.5),
         }
     }
 
@@ -57,10 +58,10 @@ impl<T: 'static> LoadingScreen<T> {
         }
 
         // Check completion and timer
-        if self.real_time > self.min_load_time {
-            if let Some(result) = self.result.take() {
-                return Some(result);
-            }
+        if self.real_time > self.min_load_time
+            && let Some(result) = self.result.take()
+        {
+            return Some(result);
         }
 
         None
@@ -121,7 +122,8 @@ impl<T: 'static> geng::State for LoadingScreen<T> {
     }
 
     fn draw(&mut self, framebuffer: &mut ugli::Framebuffer) {
-        ugli::clear(framebuffer, Some(Color::BLACK), None, None);
+        let palette = &self.assets.palette;
+        ugli::clear(framebuffer, Some(palette.background), None, None);
 
         let framebuffer_size = framebuffer.size().as_f32();
         let font_size = framebuffer_size.y * 0.08;
@@ -129,28 +131,24 @@ impl<T: 'static> geng::State for LoadingScreen<T> {
         let screen = Aabb2::ZERO.extend_positive(framebuffer_size);
         let camera = &geng::PixelPerfectCamera;
 
-        // Background
-        {
-            let gif = &self.assets.background;
-            let duration: f32 = gif.iter().map(|frame| frame.duration).sum();
-            let mut time = (self.real_time as f32 / duration).fract() * duration;
-            if let Some(frame) = gif.iter().find(|frame| {
-                time -= frame.duration;
-                time <= 0.0
-            }) {
-                self.geng.draw2d().textured_quad(
-                    framebuffer,
-                    camera,
-                    screen,
-                    &frame.texture,
-                    Color::WHITE,
-                );
-            }
-        }
+        // Fake loading bar
+        let size = vec2(10.0, 0.8) * font_size;
+        let load_bar = Aabb2::point(screen.center() + vec2(0.0, -font_size * 2.0))
+            .extend_symmetric(size / 2.0);
+        let fill_bar = load_bar.extend_uniform(-font_size * 0.1);
+        let t = (self.real_time / self.min_load_time.max(2.0)).min(1.0) as f32;
+        let t = crate::util::smoothstep(t);
+        let fill_bar = fill_bar.extend_right((t - 1.0) * fill_bar.width());
+        self.geng
+            .draw2d()
+            .quad(framebuffer, camera, load_bar, palette.progress_background);
+        self.geng
+            .draw2d()
+            .quad(framebuffer, camera, fill_bar, palette.progress);
 
         // Title
         let title = geng_utils::pixel::pixel_perfect_aabb(
-            screen.align_pos(vec2(0.5, 0.8)),
+            screen.align_pos(vec2(0.5, 0.7)),
             vec2(0.5, 0.5),
             self.assets.title.size() * 2 * (framebuffer.size().y / 360),
             camera,
@@ -166,13 +164,13 @@ impl<T: 'static> geng::State for LoadingScreen<T> {
 
         // Funny text
         if let Some(text) = self.texts.get(self.current_text) {
-            let pos = screen.align_pos(vec2(0.5, 0.45));
+            let pos = load_bar.center() + vec2(0.0, -font_size * 1.0);
             self.draw_text(
                 framebuffer,
                 camera,
                 text,
                 pos,
-                TextRenderOptions::new(font_size).color(Color::WHITE),
+                TextRenderOptions::new(font_size).color(palette.text),
             );
         }
     }
