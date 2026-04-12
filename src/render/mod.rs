@@ -598,6 +598,7 @@ impl GameRender {
                         6.0,
                         0.5,
                         &tile.tile.kind,
+                        model,
                         false,
                         pixel_scale,
                         &model.camera,
@@ -811,6 +812,7 @@ impl GameRender {
                     5.0 * pixel_scale * TILE_SIZE_PIXELS.y as f32,
                     0.4 * pixel_scale * TILE_SIZE_PIXELS.y as f32,
                     tile,
+                    model,
                     true,
                     pixel_scale,
                     &geng::PixelPerfectCamera,
@@ -842,6 +844,7 @@ impl GameRender {
         width: f32,
         font_size: f32,
         tile: &TileKind,
+        model: &Model,
         clamp_screen: bool,
         pixel_scale: f32,
         camera: &impl geng::AbstractCamera2d,
@@ -852,7 +855,20 @@ impl GameRender {
         if let TileKind::GhostBlock(_) = tile {
             return;
         }
-        let text = format!("{}\n-----\n{}", tile.name(), tile.description());
+
+        let description = if !model.unlocked_shop.contains(tile)
+            && model
+                .config
+                .shop
+                .iter()
+                .any(|shop| shop.tile == *tile && shop.unlocked_at > 0)
+        {
+            "Locked"
+        } else {
+            tile.description()
+        };
+
+        let text = format!("{}\n-----\n{}", tile.name(), description);
 
         let lines = crate::util::wrap_text(
             &self.context.assets.fonts.aseprite,
