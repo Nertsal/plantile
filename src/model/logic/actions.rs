@@ -70,30 +70,50 @@ impl Model {
 
     /// If `count_queued` is true, also accounts for the queued actions not yet taken by drones.
     pub fn can_place_tile(&self, tile: &TileKind, count_queued: bool) -> bool {
-        let mut queued = 0;
-        let mut process = |target: &DroneTarget| {
-            if let DroneTarget::PlaceTile(_, kind) = target
-                && kind == tile
+        // Account for queued placement
+        let is_queued_place = |target: &DroneTarget| {
+            if let DroneTarget::PlaceTile(_, kind) = target {
+                kind == tile
+            } else {
+                false
+            }
+        };
+        // Account for queued collection
+        let is_queued_collect = |target: &DroneTarget| {
+            if let &DroneTarget::Collect(pos) = target
+                && let Some(target) = self.grid.get_tile(pos)
+                && *tile == target.tile.kind.clone().normalized()
             {
-                queued += 1;
+                true
+            } else {
+                false
             }
         };
 
+        let mut queued: isize = 0;
         for target in self.all_drone_actions() {
-            process(target);
+            if is_queued_place(target) {
+                queued += 1;
+            } else if is_queued_collect(target) {
+                queued -= 1;
+            }
         }
         if count_queued {
             for target in self.all_queued_actions() {
-                process(target);
+                if is_queued_place(target) {
+                    queued += 1;
+                } else if is_queued_collect(target) {
+                    queued -= 1;
+                }
             }
         }
 
         let available = self.inventory.get(tile).copied().unwrap_or(0);
-        available > queued
+        available as isize > queued
     }
 
     pub fn place_tile(&mut self, target: vec2<ICoord>, tile: TileKind) -> bool {
-        if !self.can_build_at(target) || !self.inventory.iter().any(|(t, _)| *t == tile) {
+        if !self.can_build_at(target) || !self.can_place_tile(&tile, true) {
             return false;
         }
 
@@ -146,7 +166,7 @@ impl Model {
     }
 
     pub fn can_collect(&self, kind: &TileKind) -> bool {
-        let kind = tile_kind_normalization(kind.clone());
+        let kind = kind.clone().normalized();
         self.inventory.len() < INVENTORY_MAX_SIZE || self.inventory.contains_key(&kind)
     }
 
@@ -184,21 +204,23 @@ impl Model {
     }
 
     pub fn inventory_add(&mut self, kind: TileKind, count: usize) {
-        let kind = tile_kind_normalization(kind);
+        let kind = kind.normalized();
         *self.inventory.entry(kind).or_insert(0) += count;
     }
 }
 
-fn tile_kind_normalization(mut kind: TileKind) -> TileKind {
-    match &mut kind {
-        TileKind::Water(lifetime) | TileKind::Poop(lifetime) => {
-            lifetime.remaining = lifetime.max;
+impl TileKind {
+    pub fn normalized(mut self) -> Self {
+        match &mut self {
+            TileKind::Water(lifetime) | TileKind::Poop(lifetime) => {
+                lifetime.remaining = lifetime.max;
+            }
+            TileKind::Light(powered) | TileKind::Wire(powered) => *powered = false,
+            TileKind::Pipe(connected) | TileKind::Sprinkler(connected) => *connected = false,
+            TileKind::Cutter(cutter) => *cutter = Cutter::default(),
+            TileKind::Seed(seed) => *seed = Seed::new(seed.kind),
+            _ => {}
         }
-        TileKind::Light(powered) | TileKind::Wire(powered) => *powered = false,
-        TileKind::Pipe(connected) | TileKind::Sprinkler(connected) => *connected = false,
-        TileKind::Cutter(cutter) => *cutter = Cutter::default(),
-        TileKind::Seed(seed) => *seed = Seed::new(seed.kind),
-        _ => {}
+        self
     }
-    kind
 }

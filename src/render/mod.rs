@@ -26,11 +26,11 @@ const SHOP_TILE_TOO_EXPENSIVE: f32 = 0.5;
 const HOVER_ANIMATION_TIME: f32 = 0.5;
 /// Duration of the hover highlight transition.
 const HIGHLIGHT_TRANSITION: f32 = 0.25;
-/// Extra brightness of the higlighted tiles.
+/// Extra brightness of the highlighted tiles.
 const HOVER_HIGHLIGHT: f32 = 0.15;
 /// Speed of the hover highlighting blinking.
 const HOVER_BLINK_SPEED: f32 = 4.0;
-/// Relative brightness of the higlighted range for the tiles that match the hovered one.
+/// Relative brightness of the highlighted range for the tiles that match the hovered one.
 const OTHER_RANGE_HIGHLIGHT: f32 = 0.4;
 
 pub struct GameRender {
@@ -585,7 +585,9 @@ impl GameRender {
                     Color::new(0.7, 0.7, 0.7, 0.5)
                 };
                 tile_highlight(None, target, color, framebuffer);
-                if let Some(tile) = model.grid.get_tile(target) {
+                if let Some(tile) = model.grid.get_tile(target)
+                    && tile.tile.state.alive()
+                {
                     let pos = model
                         .grid_visual
                         .tile_bounds(target)
@@ -596,6 +598,7 @@ impl GameRender {
                         6.0,
                         0.5,
                         &tile.tile.kind,
+                        model,
                         false,
                         pixel_scale,
                         &model.camera,
@@ -809,6 +812,22 @@ impl GameRender {
                     5.0 * pixel_scale * TILE_SIZE_PIXELS.y as f32,
                     0.4 * pixel_scale * TILE_SIZE_PIXELS.y as f32,
                     tile,
+                    model,
+                    true,
+                    pixel_scale,
+                    &geng::PixelPerfectCamera,
+                    framebuffer,
+                );
+            }
+        }
+        for (widget, (tile, _)) in ui.inventory_items.iter().zip(&model.inventory) {
+            if widget.hovered {
+                self.tile_description(
+                    widget.position.top_right() + vec2(5.0, 0.0) * pixel_scale,
+                    5.0 * pixel_scale * TILE_SIZE_PIXELS.y as f32,
+                    0.4 * pixel_scale * TILE_SIZE_PIXELS.y as f32,
+                    tile,
+                    model,
                     true,
                     pixel_scale,
                     &geng::PixelPerfectCamera,
@@ -840,6 +859,7 @@ impl GameRender {
         width: f32,
         font_size: f32,
         tile: &TileKind,
+        model: &Model,
         clamp_screen: bool,
         pixel_scale: f32,
         camera: &impl geng::AbstractCamera2d,
@@ -850,7 +870,20 @@ impl GameRender {
         if let TileKind::GhostBlock(_) = tile {
             return;
         }
-        let text = format!("{}\n-----\n{}", tile.name(), tile.description());
+
+        let description = if !model.unlocked_shop.contains(tile)
+            && model
+                .config
+                .shop
+                .iter()
+                .any(|shop| shop.tile == *tile && shop.unlocked_at > 0)
+        {
+            "Locked"
+        } else {
+            tile.description()
+        };
+
+        let text = format!("{}\n-----\n{}", tile.name(), description);
 
         let lines = crate::util::wrap_text(
             &self.context.assets.fonts.aseprite,
@@ -878,7 +911,7 @@ impl GameRender {
                 offset.x = screen.max.x - screen_pos.max.x;
             }
             if screen_pos.min.y < screen.min.y {
-                offset.y = screen_pos.min.y - screen.min.y;
+                offset.y = screen.min.y - screen_pos.min.y;
             }
             let target =
                 camera.screen_to_world(framebuffer.size().as_f32(), screen_pos.center() + offset);

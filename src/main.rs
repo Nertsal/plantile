@@ -20,6 +20,8 @@ struct Opts {
     geng: geng::CliArgs,
     #[clap(long)]
     log: Option<String>,
+    #[clap(long)]
+    skip_intro: bool,
 }
 
 fn main() {
@@ -73,7 +75,7 @@ fn main() {
     log::info!("Goodbye!");
 }
 
-async fn geng_main(geng: Geng, _opts: Opts) -> Result<()> {
+async fn geng_main(geng: Geng, opts: Opts) -> Result<()> {
     log::debug!("Initializing the loading screen...");
     let loading_assets: Rc<assets::LoadingAssets> =
         geng::asset::Load::load(geng.asset_manager(), &run_dir().join("assets"), &())
@@ -81,7 +83,8 @@ async fn geng_main(geng: Geng, _opts: Opts) -> Result<()> {
             .context("when loading assets")?;
 
     let load_everything = load_everything(geng.clone());
-    let loading_screen = menu::LoadingScreen::new(&geng, loading_assets, load_everything).run();
+    let loading_screen =
+        menu::LoadingScreen::new(&geng, loading_assets, opts.skip_intro, load_everything).run();
 
     let context = loading_screen
         .await
